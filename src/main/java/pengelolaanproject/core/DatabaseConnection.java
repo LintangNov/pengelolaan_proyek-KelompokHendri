@@ -1,4 +1,4 @@
-package com.mycompany.pengelolaanproject.core;
+package pengelolaanproject.core;
 
 import java.io.IOException;
 import java.io.InputStream;

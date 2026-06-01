@@ -1,6 +1,6 @@
-package com.mycompany.pengelolaanproject.model;
+package pengelolaanproject.model;
 
-import com.mycompany.pengelolaanproject.core.UserRole;
+import pengelolaanproject.core.UserRole;
 
 /**
  * Model class representing a User in the system.

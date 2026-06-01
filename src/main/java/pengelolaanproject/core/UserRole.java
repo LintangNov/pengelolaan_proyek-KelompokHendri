@@ -1,4 +1,4 @@
-package com.mycompany.pengelolaanproject.core;
+package pengelolaanproject.core;
 
 /**
  * Enumeration representing roles in the project management system.
