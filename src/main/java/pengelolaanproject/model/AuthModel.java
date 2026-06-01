@@ -1,7 +1,7 @@
-package com.mycompany.pengelolaanproject.model;
+package pengelolaanproject.model;
 
-import com.mycompany.pengelolaanproject.core.DatabaseConnection;
-import com.mycompany.pengelolaanproject.core.UserRole;
+import pengelolaanproject.core.DatabaseConnection;
+import pengelolaanproject.core.UserRole;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

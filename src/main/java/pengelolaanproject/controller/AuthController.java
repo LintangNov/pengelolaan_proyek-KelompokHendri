@@ -1,10 +1,10 @@
-package com.mycompany.pengelolaanproject.controller;
+package pengelolaanproject.controller;
 
-import com.mycompany.pengelolaanproject.core.BaseController;
-import com.mycompany.pengelolaanproject.core.SessionManager;
-import com.mycompany.pengelolaanproject.model.AuthModel;
-import com.mycompany.pengelolaanproject.model.User;
-import com.mycompany.pengelolaanproject.view.AuthView;
+import pengelolaanproject.core.BaseController;
+import pengelolaanproject.core.SessionManager;
+import pengelolaanproject.model.AuthModel;
+import pengelolaanproject.model.User;
+import pengelolaanproject.view.AuthView;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

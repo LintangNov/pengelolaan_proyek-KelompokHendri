@@ -1,4 +1,4 @@
-package com.mycompany.pengelolaanproject.core;
+package pengelolaanproject.core;
 
 /**
  * Abstract base class for all controllers in the system.

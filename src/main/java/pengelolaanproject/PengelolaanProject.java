@@ -1,10 +1,10 @@
-package com.mycompany.pengelolaanproject;
+package pengelolaanproject;
 
-import com.mycompany.pengelolaanproject.controller.AuthController;
-import com.mycompany.pengelolaanproject.core.SessionManager;
-import com.mycompany.pengelolaanproject.model.AuthModel;
-import com.mycompany.pengelolaanproject.model.User;
-import com.mycompany.pengelolaanproject.view.AuthView;
+import pengelolaanproject.controller.AuthController;
+import pengelolaanproject.core.SessionManager;
+import pengelolaanproject.model.AuthModel;
+import pengelolaanproject.model.User;
+import pengelolaanproject.view.AuthView;
 import javax.swing.*;
 
 /**

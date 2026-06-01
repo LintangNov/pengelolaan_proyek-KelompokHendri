@@ -1,6 +1,6 @@
-package com.mycompany.pengelolaanproject.core;
+package pengelolaanproject.core;
 
-import com.mycompany.pengelolaanproject.model.User;
+import pengelolaanproject.model.User;
 
 /**
  * Singleton class that stores the currently logged-in User object.

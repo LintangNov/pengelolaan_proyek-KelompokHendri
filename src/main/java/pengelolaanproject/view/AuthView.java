@@ -1,4 +1,4 @@
-package com.mycompany.pengelolaanproject.view;
+package pengelolaanproject.view;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
