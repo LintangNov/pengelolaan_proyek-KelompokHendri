@@ -215,4 +215,14 @@ public class ManagerDashboardView extends DashboardView {
         }
         return null;
     }
+
+    /**
+     * Exposes registering a mouse listener on the projects table.
+     * Useful for double-click bindings to view detail boards.
+     */
+    public void addProjectTableMouseListener(java.awt.event.MouseListener listener) {
+        if (listener != null) {
+            tblProjects.addMouseListener(listener);
+        }
+    }
 }

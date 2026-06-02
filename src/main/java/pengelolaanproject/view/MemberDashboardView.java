@@ -200,4 +200,14 @@ public class MemberDashboardView extends DashboardView {
         }
         return null;
     }
+
+    /**
+     * Exposes registering a mouse listener on the tasks table.
+     * Useful for double-click bindings.
+     */
+    public void addTaskTableMouseListener(java.awt.event.MouseListener listener) {
+        if (listener != null) {
+            tblTasks.addMouseListener(listener);
+        }
+    }
 }
