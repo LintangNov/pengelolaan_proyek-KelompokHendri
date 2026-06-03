@@ -12,6 +12,11 @@ import java.sql.SQLException;
  * Queries the USERS table to validate credentials.
  */
 public class AuthModel {
+    private final Connection connection;
+
+    public AuthModel(Connection connection) {
+        this.connection = connection;
+    }
 
     /**
      * Queries the USERS table for a matching username and password.
@@ -28,7 +33,7 @@ public class AuthModel {
         }
 
         String query = "SELECT id, username, password, role FROM USERS WHERE username = ? AND password = ?";
-        Connection conn = DatabaseConnection.getInstance().getConnection();
+        Connection conn = this.connection;
 
         if (conn == null) {
             System.err.println("Error: Database connection is offline or unavailable.");

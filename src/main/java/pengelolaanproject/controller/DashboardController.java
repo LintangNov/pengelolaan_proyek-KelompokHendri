@@ -12,6 +12,7 @@ import pengelolaanproject.repository.IProjectRepository;
 import pengelolaanproject.view.ManagerDashboardView;
 import pengelolaanproject.view.MemberDashboardView;
 import pengelolaanproject.view.TaskBoardView;
+import pengelolaanproject.view.DashboardView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +38,12 @@ public class DashboardController extends BaseController {
     private final User currentUser;
 
     // View Components
+    private final DashboardView dashboardView;
     private ManagerDashboardView managerView;
     private MemberDashboardView memberView;
+
+    // Injected Controller
+    private final ProjectController projectController;
 
     // Maps taskId to projectId for member views where project scope is not directly available
     private final Map<Integer, Integer> taskProjectMap = new HashMap<>();
@@ -46,10 +51,14 @@ public class DashboardController extends BaseController {
     /**
      * Constructs the controller, initializes the main app frame, and setups the workspace based on user role.
      *
-     * @param repository project repository data contract
+     * @param repository        project repository data contract
+     * @param dashboardView     the view injected based on role
+     * @param projectController the project controller injected for project creation
      */
-    public DashboardController(IProjectRepository repository) {
+    public DashboardController(IProjectRepository repository, DashboardView dashboardView, ProjectController projectController) {
         this.repository = repository;
+        this.dashboardView = dashboardView;
+        this.projectController = projectController;
         this.currentUser = SessionManager.getInstance().getCurrentUser();
 
         // Initialize application main window
@@ -70,8 +79,8 @@ public class DashboardController extends BaseController {
      * Instantiates correct dashboard view based on user role, registers listeners, and displays frame.
      */
     private void initializeWorkspace() {
-        if (currentUser.getRole() == UserRole.PM) {
-            this.managerView = new ManagerDashboardView();
+        if (dashboardView instanceof ManagerDashboardView) {
+            this.managerView = (ManagerDashboardView) dashboardView;
 
             // Wire manager quick actions
             this.managerView.addCreateProjectListener(new CreateProjectButtonListener());
@@ -92,8 +101,8 @@ public class DashboardController extends BaseController {
             });
 
             this.mainFrame.setContentPane(managerView);
-        } else {
-            this.memberView = new MemberDashboardView();
+        } else if (dashboardView instanceof MemberDashboardView) {
+            this.memberView = (MemberDashboardView) dashboardView;
 
             // Wire member actions
             this.memberView.addUpdateStatusListener(new UpdateStatusButtonListener());
@@ -161,7 +170,7 @@ public class DashboardController extends BaseController {
     private class CreateProjectButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            ProjectController projectController = new ProjectController(repository, () -> refreshData());
+            projectController.setOnProjectCreated(() -> refreshData());
             projectController.show();
         }
     }

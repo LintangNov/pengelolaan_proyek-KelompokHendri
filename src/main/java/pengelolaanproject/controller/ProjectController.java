@@ -4,6 +4,7 @@ import pengelolaanproject.core.BaseController;
 import pengelolaanproject.model.ProjectModel;
 import pengelolaanproject.repository.IProjectRepository;
 import pengelolaanproject.view.ProjectView;
+import pengelolaanproject.view.TaskBoardView;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -16,20 +17,22 @@ import java.util.Date;
  */
 public class ProjectController extends BaseController {
     private final ProjectView view;
+    private final TaskBoardView taskBoardView;
     private final IProjectRepository repository;
     private final JDialog dialog;
-    private final Runnable onProjectCreated;
+    private Runnable onProjectCreated;
 
     /**
      * Constructs the controller, wraps ProjectView in a modal dialog, and registers listener.
      *
+     * @param view             the project view
+     * @param taskBoardView    the task board view
      * @param repository       the project repository contract
-     * @param onProjectCreated callback to execute on successful creation (e.g. to refresh parent view)
      */
-    public ProjectController(IProjectRepository repository, Runnable onProjectCreated) {
+    public ProjectController(ProjectView view, TaskBoardView taskBoardView, IProjectRepository repository) {
         this.repository = repository;
-        this.onProjectCreated = onProjectCreated;
-        this.view = new ProjectView();
+        this.view = view;
+        this.taskBoardView = taskBoardView;
 
         // Wrap ProjectView in a modal JDialog
         this.dialog = new JDialog((JFrame) null, "Create New Project", true);
@@ -42,6 +45,13 @@ public class ProjectController extends BaseController {
 
         // Register form listener
         this.view.addCreateListener(new CreateButtonListener());
+    }
+
+    /**
+     * Sets the callback to execute on successful creation (e.g. to refresh parent view).
+     */
+    public void setOnProjectCreated(Runnable onProjectCreated) {
+        this.onProjectCreated = onProjectCreated;
     }
 
     /**
