@@ -13,15 +13,15 @@ import java.awt.geom.RoundRectangle2D;
 public abstract class DashboardView extends JPanel {
 
     // Harmonious Premium Palette Colors
-    public static final Color BG_GRADIENT_START = new Color(15, 12, 30);
-    public static final Color BG_GRADIENT_END = new Color(20, 24, 45);
-    public static final Color CARD_BG = new Color(30, 30, 50, 200);
-    public static final Color TEXT_PRIMARY = new Color(245, 246, 250);
-    public static final Color TEXT_SECONDARY = new Color(180, 186, 201);
-    public static final Color ACCENT_CYAN = new Color(0, 180, 216);
-    public static final Color ACCENT_PURPLE = new Color(114, 9, 183);
-    public static final Color INPUT_BG = new Color(20, 20, 35);
-    public static final Color INPUT_BORDER = new Color(75, 75, 110);
+    public static final Color BG_GRADIENT_START = new Color(34, 40, 49);
+    public static final Color BG_GRADIENT_END = new Color(26, 30, 37);
+    public static final Color CARD_BG = new Color(57, 62, 70, 200);
+    public static final Color TEXT_PRIMARY = new Color(238, 238, 238);
+    public static final Color TEXT_SECONDARY = new Color(158, 162, 169);
+    public static final Color ACCENT_CYAN = new Color(0, 173, 181);
+    public static final Color ACCENT_PURPLE = new Color(0, 110, 120);
+    public static final Color INPUT_BG = new Color(34, 40, 49);
+    public static final Color INPUT_BORDER = new Color(57, 62, 70);
     public static final Color ERROR_COLOR = new Color(230, 57, 70);
 
     public DashboardView() {
@@ -164,8 +164,8 @@ public abstract class DashboardView extends JPanel {
                 end = end.darker();
             } else if (hovered) {
                 // Glow/lighten accent on hover
-                start = new Color(130, 20, 200);
-                end = new Color(0, 205, 245);
+                start = new Color(0, 140, 150);
+                end = new Color(0, 210, 220);
             }
 
             GradientPaint gp = new GradientPaint(0, 0, start, w, h, end);

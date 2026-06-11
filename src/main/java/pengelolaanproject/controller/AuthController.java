@@ -5,6 +5,9 @@ import pengelolaanproject.core.SessionManager;
 import pengelolaanproject.model.AuthModel;
 import pengelolaanproject.model.User;
 import pengelolaanproject.view.AuthView;
+import pengelolaanproject.view.RegisterView;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -29,8 +32,9 @@ public class AuthController extends BaseController {
         this.view = view;
         this.onLoginSuccess = onLoginSuccess;
 
-        // Wire event listener in the view
+        // Wire event listeners in the view
         this.view.addLoginListener(new LoginButtonListener());
+        this.view.addRegisterLinkListener(new RegisterLinkListener());
     }
 
     /**
@@ -68,6 +72,52 @@ public class AuthController extends BaseController {
             } else {
                 view.showError("Invalid username or password. Please try again.");
             }
+        }
+    }
+
+    /**
+     * Inner class implementing action handling for registration link.
+     */
+    private class RegisterLinkListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            RegisterView registerView = new RegisterView();
+            JDialog registerDialog = new JDialog(view, "Create New Account", true);
+            registerDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            registerDialog.setContentPane(registerView);
+            registerDialog.pack();
+            registerDialog.setSize(440, 480);
+            registerDialog.setLocationRelativeTo(view);
+            registerDialog.setResizable(false);
+
+            registerView.addRegisterListener(evt -> {
+                String username = registerView.getUsername();
+                String password = registerView.getPassword();
+                pengelolaanproject.core.UserRole role = registerView.getSelectedRole();
+
+                if (username.isEmpty() || password.isEmpty()) {
+                    registerView.showError("Username and password cannot be empty.");
+                    return;
+                }
+
+                registerView.showError(""); // Reset error
+
+                boolean success = model.register(username, password, role);
+                if (success) {
+                    JOptionPane.showMessageDialog(
+                            registerDialog,
+                            "User account \"" + username + "\" successfully registered!",
+                            "Registration Success",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    registerDialog.dispose();
+                } else {
+                    registerView.showError("Failed to register. Username might already be taken.");
+                }
+            });
+
+            registerView.clearForm();
+            registerDialog.setVisible(true);
         }
     }
 }

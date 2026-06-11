@@ -25,6 +25,10 @@ import java.sql.Connection;
  */
 public class Main {
 
+    private static IProjectRepository projectRepository;
+    private static AuthModel authModel;
+    private static ProjectController projectController;
+
     public static void main(String[] args) {
         // Apply System Look and Feel for native operating system window borders
         try {
@@ -38,10 +42,10 @@ public class Main {
             Connection connection = DatabaseConnection.getInstance().getConnection();
 
             // 2. ProjectRepository (inject Connection)
-            IProjectRepository projectRepository = new ProjectRepository(connection);
+            projectRepository = new ProjectRepository(connection);
 
             // 3. AuthModel (inject Connection)
-            AuthModel authModel = new AuthModel(connection);
+            authModel = new AuthModel(connection);
 
             // 4. ProjectView
             ProjectView projectView = new ProjectView();
@@ -50,32 +54,46 @@ public class Main {
             TaskBoardView taskBoardView = new TaskBoardView();
 
             // 6. ProjectController (inject ProjectView, TaskBoardView, ProjectRepository)
-            ProjectController projectController = new ProjectController(projectView, taskBoardView, projectRepository);
+            projectController = new ProjectController(projectView, taskBoardView, projectRepository);
 
-            // 7. AuthView
-            AuthView authView = new AuthView();
+            // Start Login interface
+            showLogin();
+        });
+    }
 
-            // Routing callback triggered on successful login
-            Runnable onLoginSuccess = () -> {
-                User currentUser = SessionManager.getInstance().getCurrentUser();
-                DashboardView dashboardView;
+    /**
+     * Instantiates and displays the login screen, and handles the post-login routing.
+     */
+    public static void showLogin() {
+        // 7. AuthView
+        AuthView authView = new AuthView();
 
-                // Handle the routing based on UserRole
-                if (currentUser.getRole() == UserRole.PM) {
-                    dashboardView = new ManagerDashboardView();
-                } else {
-                    dashboardView = new MemberDashboardView();
-                }
+        // Routing callback triggered on successful login
+        Runnable onLoginSuccess = () -> {
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            DashboardView dashboardView;
 
-                // Instantiate DashboardController with correct view type based on role
-                new DashboardController(projectRepository, dashboardView, projectController);
+            // Handle the routing based on UserRole
+            if (currentUser.getRole() == UserRole.PM) {
+                dashboardView = new ManagerDashboardView();
+            } else {
+                dashboardView = new MemberDashboardView();
+            }
+
+            // Callback when logging out
+            Runnable onLogout = () -> {
+                SessionManager.getInstance().clearSession();
+                showLogin();
             };
 
-            // 8. AuthController (inject AuthModel, AuthView; on success, instantiate DashboardController)
-            new AuthController(authModel, authView, onLoginSuccess);
+            // Instantiate DashboardController with correct view type and logout callback
+            new DashboardController(projectRepository, dashboardView, projectController, onLogout);
+        };
 
-            // Render view visible to user
-            authView.setVisible(true);
-        });
+        // 8. AuthController (inject AuthModel, AuthView; on success, instantiate DashboardController)
+        new AuthController(authModel, authView, onLoginSuccess);
+
+        // Render view visible to user
+        authView.setVisible(true);
     }
 }

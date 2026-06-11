@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS TASKS (
     status VARCHAR(50) NOT NULL,
     due_date DATE,
     submission_link VARCHAR(255),
+    description TEXT DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
     FOREIGN KEY (project_id) REFERENCES PROJECTS(id) ON DELETE CASCADE,
     FOREIGN KEY (assignee_id) REFERENCES USERS(id) ON DELETE SET NULL
 );

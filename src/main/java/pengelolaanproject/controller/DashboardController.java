@@ -36,6 +36,7 @@ public class DashboardController extends BaseController {
     private final IProjectRepository repository;
     private final JFrame mainFrame;
     private final User currentUser;
+    private final Runnable onLogout;
 
     // View Components
     private final DashboardView dashboardView;
@@ -54,11 +55,13 @@ public class DashboardController extends BaseController {
      * @param repository        project repository data contract
      * @param dashboardView     the view injected based on role
      * @param projectController the project controller injected for project creation
+     * @param onLogout          callback fired upon logout request
      */
-    public DashboardController(IProjectRepository repository, DashboardView dashboardView, ProjectController projectController) {
+    public DashboardController(IProjectRepository repository, DashboardView dashboardView, ProjectController projectController, Runnable onLogout) {
         this.repository = repository;
         this.dashboardView = dashboardView;
         this.projectController = projectController;
+        this.onLogout = onLogout;
         this.currentUser = SessionManager.getInstance().getCurrentUser();
 
         // Initialize application main window
@@ -86,6 +89,7 @@ public class DashboardController extends BaseController {
             this.managerView.addCreateProjectListener(new CreateProjectButtonListener());
             this.managerView.addAssignTaskListener(new AssignTaskButtonListener());
             this.managerView.addApproveTaskListener(new ApproveTaskButtonListener());
+            this.managerView.addLogoutListener(new LogoutButtonListener());
 
             // Double-click table row to view Kanban Board
             this.managerView.addProjectTableMouseListener(new MouseAdapter() {
@@ -106,6 +110,7 @@ public class DashboardController extends BaseController {
 
             // Wire member actions
             this.memberView.addUpdateStatusListener(new UpdateStatusButtonListener());
+            this.memberView.addLogoutListener(new LogoutButtonListener());
 
             // Double-click table row to view Kanban Board
             this.memberView.addTaskTableMouseListener(new MouseAdapter() {
@@ -150,10 +155,8 @@ public class DashboardController extends BaseController {
 
             for (ProjectModel project : allProjects) {
                 for (TaskModel task : project.getTasks()) {
-                    if (task.getAssigneeId() == currentUser.getId()) {
-                        memberTasks.add(task);
-                        taskProjectMap.put(task.getId(), project.getId());
-                    }
+                    memberTasks.add(task);
+                    taskProjectMap.put(task.getId(), project.getId());
                 }
             }
             memberView.displayTasks(memberTasks);
@@ -172,6 +175,29 @@ public class DashboardController extends BaseController {
         public void actionPerformed(ActionEvent e) {
             projectController.setOnProjectCreated(() -> refreshData());
             projectController.show();
+        }
+    }
+
+    /**
+     * Action handler for Logout. Disposes frame and runs logout routing callback.
+     */
+    private class LogoutButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int confirm = JOptionPane.showConfirmDialog(
+                    mainFrame,
+                    "Are you sure you want to log out?",
+                    "Confirm Logout",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                mainFrame.dispose();
+                if (onLogout != null) {
+                    onLogout.run();
+                }
+            }
         }
     }
 
@@ -196,6 +222,11 @@ public class DashboardController extends BaseController {
 
             // Construct form UI
             JTextField txtTitle = new JTextField();
+            JTextArea txtDesc = new JTextArea(3, 20);
+            txtDesc.setLineWrap(true);
+            txtDesc.setWrapStyleWord(true);
+            JScrollPane descScroll = new JScrollPane(txtDesc);
+
             JComboBox<User> cmbAssignee = new JComboBox<>();
             for (User u : assignableUsers) {
                 cmbAssignee.addItem(u);
@@ -215,9 +246,11 @@ public class DashboardController extends BaseController {
 
             JTextField txtDueDate = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
-            JPanel formPanel = new JPanel(new GridLayout(3, 2, 8, 8));
+            JPanel formPanel = new JPanel(new GridLayout(4, 2, 8, 8));
             formPanel.add(new JLabel("Task Title:"));
             formPanel.add(txtTitle);
+            formPanel.add(new JLabel("Description (Optional):"));
+            formPanel.add(descScroll);
             formPanel.add(new JLabel("Assignee:"));
             formPanel.add(cmbAssignee);
             formPanel.add(new JLabel("Due Date (YYYY-MM-DD):"));
@@ -233,6 +266,7 @@ public class DashboardController extends BaseController {
 
             if (result == JOptionPane.OK_OPTION) {
                 String title = txtTitle.getText().trim();
+                String description = txtDesc.getText().trim();
                 User assignee = (User) cmbAssignee.getSelectedItem();
                 String dueDateStr = txtDueDate.getText().trim();
 
@@ -259,6 +293,7 @@ public class DashboardController extends BaseController {
                 try {
                     // Create task model and save
                     TaskModel task = new TaskModel(title, assignee.getId());
+                    task.setDescription(description);
                     task.setDueDate(dueDate);
                     task.setStatus(TaskStatus.TODO);
 
@@ -367,43 +402,67 @@ public class DashboardController extends BaseController {
                 return;
             }
 
+            // Enforce assignee restriction: members can only update tasks assigned to themselves
+            if (currentUser.getRole() != UserRole.PM && task.getAssigneeId() != currentUser.getId()) {
+                JOptionPane.showMessageDialog(
+                        mainFrame,
+                        "Access Denied: You can only update tasks assigned to you.",
+                        "Access Restriction",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
             // Enforce role restriction: Members can only choose TODO, IN_PROGRESS, REVIEW (never DONE directly)
             TaskStatus[] options = { TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.REVIEW };
 
-            TaskStatus selected = (TaskStatus) JOptionPane.showInputDialog(
+            JComboBox<TaskStatus> cmbStatus = new JComboBox<>(options);
+            cmbStatus.setSelectedItem(task.getStatus());
+            
+            JTextArea txtNotes = new JTextArea(task.getNotes(), 3, 20);
+            txtNotes.setLineWrap(true);
+            txtNotes.setWrapStyleWord(true);
+            JScrollPane notesScroll = new JScrollPane(txtNotes);
+            
+            JTextField txtLink = new JTextField(task.getSubmissionLink());
+            txtLink.setEnabled(task.getStatus() == TaskStatus.REVIEW);
+
+            cmbStatus.addActionListener(evt -> {
+                txtLink.setEnabled(cmbStatus.getSelectedItem() == TaskStatus.REVIEW);
+            });
+
+            JPanel panel = new JPanel(new GridLayout(3, 2, 8, 8));
+            panel.add(new JLabel("Status:"));
+            panel.add(cmbStatus);
+            panel.add(new JLabel("Notes (Optional):"));
+            panel.add(notesScroll);
+            panel.add(new JLabel("Submission Link (Required for REVIEW):"));
+            panel.add(txtLink);
+
+            int result = JOptionPane.showConfirmDialog(
                     mainFrame,
-                    "Choose target status for task \"" + task.getTitle() + "\":",
-                    "Update Status",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    task.getStatus()
+                    panel,
+                    "Update Task: " + task.getTitle(),
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
             );
 
-            if (selected != null && selected != task.getStatus()) {
-                String link = task.getSubmissionLink();
+            if (result == JOptionPane.OK_OPTION) {
+                TaskStatus selected = (TaskStatus) cmbStatus.getSelectedItem();
+                String notes = txtNotes.getText().trim();
+                String link = txtLink.getText().trim();
 
-                if (selected == TaskStatus.REVIEW) {
-                    link = JOptionPane.showInputDialog(
-                            mainFrame,
-                            "Enter the GitHub Repository URL or Figma design URL to proceed to REVIEW:",
-                            "Submission Link Required",
-                            JOptionPane.QUESTION_MESSAGE
-                    );
-
-                    if (link == null) {
-                        return; // Canceled dialog
-                    }
-                    link = link.trim();
-                    if (link.isEmpty()) {
-                        JOptionPane.showMessageDialog(mainFrame, "Submission link is mandatory to submit for review.", "Validation Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
+                if (selected == TaskStatus.REVIEW && link.isEmpty()) {
+                    JOptionPane.showMessageDialog(mainFrame, "Submission link is mandatory to submit for review.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
 
                 try {
                     task.setStatus(selected);
-                    task.setSubmissionLink(link);
+                    task.setNotes(notes);
+                    if (selected == TaskStatus.REVIEW) {
+                        task.setSubmissionLink(link);
+                    }
 
                     int projectId = taskProjectMap.getOrDefault(task.getId(), 0);
                     if (projectId <= 0) {
@@ -465,22 +524,82 @@ public class DashboardController extends BaseController {
                 return;
             }
 
-            try {
-                task.setStatus(targetStatus);
-                if (targetStatus == TaskStatus.REVIEW) {
-                    task.setSubmissionLink(link);
+            // Enforce assignee restriction: members can only move tasks assigned to themselves
+            if (currentUser.getRole() != UserRole.PM && task.getAssigneeId() != currentUser.getId()) {
+                JOptionPane.showMessageDialog(
+                        boardFrame,
+                        "Access Denied: You can only update tasks assigned to you.",
+                        "Access Restriction",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                // Revert board display
+                ProjectModel reset = repository.findProjectById(project.getId());
+                boardView.displayBoard(reset.getTasks());
+                return;
+            }
+
+            // Open confirmation panel with notes and (if REVIEW) link input
+            JTextArea txtNotes = new JTextArea(task.getNotes(), 3, 20);
+            txtNotes.setLineWrap(true);
+            txtNotes.setWrapStyleWord(true);
+            JScrollPane notesScroll = new JScrollPane(txtNotes);
+ 
+            JTextField txtLink = new JTextField(task.getSubmissionLink());
+ 
+            JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
+            panel.add(new JLabel("Notes (Optional):"));
+            panel.add(notesScroll);
+ 
+            if (targetStatus == TaskStatus.REVIEW) {
+                panel = new JPanel(new GridLayout(3, 2, 8, 8));
+                panel.add(new JLabel("Notes (Optional):"));
+                panel.add(notesScroll);
+                panel.add(new JLabel("Submission Link (Required for REVIEW):"));
+                panel.add(txtLink);
+            }
+ 
+            int confirm = JOptionPane.showConfirmDialog(
+                    boardFrame,
+                    panel,
+                    "Confirm Move to " + targetStatus.name(),
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+ 
+            if (confirm == JOptionPane.OK_OPTION) {
+                String notes = txtNotes.getText().trim();
+                String linkInput = txtLink.getText().trim();
+ 
+                if (targetStatus == TaskStatus.REVIEW && linkInput.isEmpty()) {
+                    JOptionPane.showMessageDialog(boardFrame, "Submission link is mandatory to submit for review.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    // Revert board display
+                    ProjectModel reset = repository.findProjectById(project.getId());
+                    boardView.displayBoard(reset.getTasks());
+                    return;
                 }
-
-                repository.saveTask(task, project.getId());
-
-                // Refresh Kanban Board
-                ProjectModel refreshed = repository.findProjectById(project.getId());
-                boardView.displayBoard(refreshed.getTasks());
-
-                // Refresh parent dashboard
-                refreshData();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(boardFrame, "Failed to update task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+ 
+                try {
+                    task.setStatus(targetStatus);
+                    task.setNotes(notes);
+                    if (targetStatus == TaskStatus.REVIEW) {
+                        task.setSubmissionLink(linkInput);
+                    }
+ 
+                    repository.saveTask(task, project.getId());
+ 
+                    // Refresh Kanban Board
+                    ProjectModel refreshed = repository.findProjectById(project.getId());
+                    boardView.displayBoard(refreshed.getTasks());
+ 
+                    // Refresh parent dashboard
+                    refreshData();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(boardFrame, "Failed to update task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                // Cancelled - Reset board display
+                ProjectModel reset = repository.findProjectById(project.getId());
+                boardView.displayBoard(reset.getTasks());
             }
         });
 
@@ -497,8 +616,12 @@ public class DashboardController extends BaseController {
     private List<User> getAssignableUsers() {
         List<User> users = new ArrayList<>();
         String query = "SELECT id, username, role FROM USERS WHERE role IN ('DEV', 'UIUX')";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null) {
+            System.err.println("Database connection is null in getAssignableUsers");
+            return users;
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 users.add(new User(

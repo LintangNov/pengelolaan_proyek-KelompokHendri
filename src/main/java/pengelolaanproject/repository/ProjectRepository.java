@@ -141,7 +141,7 @@ public class ProjectRepository implements IProjectRepository {
             return;
         }
         if (task.getId() == 0) {
-            String query = "INSERT INTO TASKS (project_id, assignee_id, title, type, status, due_date, submission_link) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO TASKS (project_id, assignee_id, title, type, status, due_date, submission_link, description, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setInt(1, projectId);
                 if (task.getAssigneeId() <= 0) {
@@ -158,6 +158,8 @@ public class ProjectRepository implements IProjectRepository {
                     stmt.setDate(6, new java.sql.Date(task.getDueDate().getTime()));
                 }
                 stmt.setString(7, task.getSubmissionLink());
+                stmt.setString(8, task.getDescription());
+                stmt.setString(9, task.getNotes());
 
                 stmt.executeUpdate();
 
@@ -170,7 +172,7 @@ public class ProjectRepository implements IProjectRepository {
                 System.err.println("SQL Exception in saveTask (insert): " + e.getMessage());
             }
         } else {
-            String query = "UPDATE TASKS SET project_id = ?, assignee_id = ?, title = ?, status = ?, due_date = ?, submission_link = ? WHERE id = ?";
+            String query = "UPDATE TASKS SET project_id = ?, assignee_id = ?, title = ?, status = ?, due_date = ?, submission_link = ?, description = ?, notes = ? WHERE id = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setInt(1, projectId);
                 if (task.getAssigneeId() <= 0) {
@@ -186,7 +188,9 @@ public class ProjectRepository implements IProjectRepository {
                     stmt.setDate(5, new java.sql.Date(task.getDueDate().getTime()));
                 }
                 stmt.setString(6, task.getSubmissionLink());
-                stmt.setInt(7, task.getId());
+                stmt.setString(7, task.getDescription());
+                stmt.setString(8, task.getNotes());
+                stmt.setInt(9, task.getId());
 
                 stmt.executeUpdate();
             } catch (SQLException e) {
@@ -201,7 +205,7 @@ public class ProjectRepository implements IProjectRepository {
      * @param project the project model to load tasks for
      */
     private void loadTasksForProject(ProjectModel project) {
-        String query = "SELECT id, title, status, submission_link, assignee_id, due_date FROM TASKS WHERE project_id = ?";
+        String query = "SELECT id, title, status, submission_link, assignee_id, due_date, description, notes FROM TASKS WHERE project_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, project.getId());
             try (ResultSet rs = stmt.executeQuery()) {
@@ -213,8 +217,10 @@ public class ProjectRepository implements IProjectRepository {
                     String submissionLink = rs.getString("submission_link");
                     int assigneeId = rs.getInt("assignee_id");
                     Date dueDate = rs.getDate("due_date");
+                    String description = rs.getString("description");
+                    String notes = rs.getString("notes");
 
-                    TaskModel task = new TaskModel(id, title, status, submissionLink, assigneeId, dueDate);
+                    TaskModel task = new TaskModel(id, title, status, submissionLink, assigneeId, dueDate, description, notes);
                     project.addTask(task);
                 }
             }

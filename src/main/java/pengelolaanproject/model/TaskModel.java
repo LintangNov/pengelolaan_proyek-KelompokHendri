@@ -12,6 +12,8 @@ public class TaskModel {
     private String submissionLink;
     private int assigneeId;
     private Date dueDate;
+    private String description;
+    private String notes;
 
     /**
      * Standard constructor requested by specification.
@@ -26,6 +28,8 @@ public class TaskModel {
         this.status = TaskStatus.TODO;
         this.submissionLink = "";
         this.dueDate = null;
+        this.description = "";
+        this.notes = "";
     }
 
     /**
@@ -39,12 +43,21 @@ public class TaskModel {
      * @param dueDate        the due date
      */
     public TaskModel(int id, String title, TaskStatus status, String submissionLink, int assigneeId, Date dueDate) {
+        this(id, title, status, submissionLink, assigneeId, dueDate, "", "");
+    }
+
+    /**
+     * Complete overloaded constructor for database mapping.
+     */
+    public TaskModel(int id, String title, TaskStatus status, String submissionLink, int assigneeId, Date dueDate, String description, String notes) {
         this.id = id;
         this.title = title;
         this.status = status;
         this.submissionLink = submissionLink;
         this.assigneeId = assigneeId;
         this.dueDate = dueDate;
+        this.description = description != null ? description : "";
+        this.notes = notes != null ? notes : "";
     }
 
     // Getters for all fields
@@ -101,6 +114,22 @@ public class TaskModel {
         this.dueDate = dueDate;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description != null ? description : "";
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes != null ? notes : "";
+    }
+
     @Override
     public String toString() {
         return "TaskModel{" +
@@ -110,6 +139,8 @@ public class TaskModel {
                 ", submissionLink='" + submissionLink + '\'' +
                 ", assigneeId=" + assigneeId +
                 ", dueDate=" + dueDate +
+                ", description='" + description + '\'' +
+                ", notes='" + notes + '\'' +
                 '}';
     }
 }

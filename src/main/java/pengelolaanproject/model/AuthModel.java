@@ -60,4 +60,48 @@ public class AuthModel {
         }
         return null;
     }
+
+    /**
+     * Registers a new user. Checks for username uniqueness.
+     * On success, returns true. On failure, returns false.
+     */
+    public boolean register(String username, String password, UserRole role) {
+        if (username == null || password == null || role == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+            return false;
+        }
+
+        // Check if username already exists
+        String checkQuery = "SELECT id FROM USERS WHERE username = ?";
+        Connection conn = this.connection;
+        if (conn == null) {
+            System.err.println("Error: Database connection is offline or unavailable.");
+            return false;
+        }
+
+        try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setString(1, username.trim());
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (rs.next()) {
+                    System.err.println("Username already exists: " + username);
+                    return false; // Already exists
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Exception during username availability check: " + e.getMessage());
+            return false;
+        }
+
+        // Insert new user
+        String insertQuery = "INSERT INTO USERS (username, password, role) VALUES (?, ?, ?)";
+        try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+            insertStmt.setString(1, username.trim());
+            insertStmt.setString(2, password);
+            insertStmt.setString(3, role.name());
+            int affectedRows = insertStmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("SQL Exception during user registration: " + e.getMessage());
+            return false;
+        }
+    }
 }

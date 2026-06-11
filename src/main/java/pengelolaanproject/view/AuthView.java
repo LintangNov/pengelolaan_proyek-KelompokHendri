@@ -17,18 +17,19 @@ public class AuthView extends JFrame {
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JButton btnLogin;
+    private JButton btnRegisterLink;
     private JLabel lblError;
 
     // Palette Colors
-    private static final Color BG_GRADIENT_START = new Color(15, 12, 30);
-    private static final Color BG_GRADIENT_END = new Color(20, 24, 45);
-    private static final Color CARD_BG = new Color(30, 30, 50, 200);
-    private static final Color TEXT_PRIMARY = new Color(245, 246, 250);
-    private static final Color TEXT_SECONDARY = new Color(180, 186, 201);
-    private static final Color ACCENT_CYAN = new Color(0, 180, 216);
-    private static final Color ACCENT_PURPLE = new Color(114, 9, 183);
-    private static final Color INPUT_BG = new Color(20, 20, 35);
-    private static final Color INPUT_BORDER = new Color(75, 75, 110);
+    private static final Color BG_GRADIENT_START = new Color(34, 40, 49);
+    private static final Color BG_GRADIENT_END = new Color(26, 30, 37);
+    private static final Color CARD_BG = new Color(57, 62, 70, 200);
+    private static final Color TEXT_PRIMARY = new Color(238, 238, 238);
+    private static final Color TEXT_SECONDARY = new Color(158, 162, 169);
+    private static final Color ACCENT_CYAN = new Color(0, 173, 181);
+    private static final Color ACCENT_PURPLE = new Color(0, 110, 120);
+    private static final Color INPUT_BG = new Color(34, 40, 49);
+    private static final Color INPUT_BORDER = new Color(57, 62, 70);
     private static final Color ERROR_COLOR = new Color(230, 57, 70);
 
     public AuthView() {
@@ -108,6 +109,21 @@ public class AuthView extends JFrame {
         btnLogin.setPreferredSize(new Dimension(320, 45));
         btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // Register Link
+        btnRegisterLink = new JButton("Don't have an account? Register here") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+            }
+        };
+        btnRegisterLink.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnRegisterLink.setForeground(ACCENT_CYAN);
+        btnRegisterLink.setContentAreaFilled(false);
+        btnRegisterLink.setFocusPainted(false);
+        btnRegisterLink.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnRegisterLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnRegisterLink.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         // Assembly
         cardPanel.add(lblLogo);
         cardPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -118,6 +134,8 @@ public class AuthView extends JFrame {
         cardPanel.add(lblError);
         cardPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         cardPanel.add(btnLogin);
+        cardPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        cardPanel.add(btnRegisterLink);
 
         mainPanel.add(cardPanel);
     }
@@ -176,6 +194,12 @@ public class AuthView extends JFrame {
         // Also fire login action on pressing Enter in either input fields
         txtUsername.addActionListener(listener);
         txtPassword.addActionListener(listener);
+    }
+
+    public void addRegisterLinkListener(ActionListener listener) {
+        if (listener != null) {
+            btnRegisterLink.addActionListener(listener);
+        }
     }
 
     public void close() {
@@ -299,8 +323,8 @@ public class AuthView extends JFrame {
                 end = end.darker();
             } else if (hovered) {
                 // Glow/lighten accent on hover
-                start = new Color(130, 20, 200);
-                end = new Color(0, 205, 245);
+                start = new Color(0, 140, 150);
+                end = new Color(0, 210, 220);
             }
 
             GradientPaint gp = new GradientPaint(0, 0, start, w, h, end);

@@ -25,6 +25,7 @@ public class ManagerDashboardView extends DashboardView {
     private GradientButton btnCreateProject;
     private GradientButton btnAssignTask;
     private GradientButton btnApproveTask;
+    private GradientButton btnLogout;
     private List<ProjectModel> currentProjects;
 
     public ManagerDashboardView() {
@@ -40,9 +41,12 @@ public class ManagerDashboardView extends DashboardView {
         setBorder(new EmptyBorder(30, 40, 30, 40));
 
         // 1. Header Area
-        JPanel headerPanel = new JPanel();
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
         JLabel lblTitle = new JLabel("Manager Workspace");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
@@ -52,9 +56,20 @@ public class ManagerDashboardView extends DashboardView {
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SECONDARY);
 
-        headerPanel.add(lblTitle);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-        headerPanel.add(lblSubtitle);
+        titlePanel.add(lblTitle);
+        titlePanel.add(Box.createRigidArea(new Dimension(0, 6)));
+        titlePanel.add(lblSubtitle);
+
+        headerPanel.add(titlePanel, BorderLayout.WEST);
+
+        // Logout Button
+        btnLogout = new GradientButton("Logout", 8);
+        btnLogout.setPreferredSize(new Dimension(100, 36));
+        JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10));
+        logoutPanel.setOpaque(false);
+        logoutPanel.add(btnLogout);
+
+        headerPanel.add(logoutPanel, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
         // 2. Table / Center Area (Wrapped in a GlassCard)
@@ -103,8 +118,14 @@ public class ManagerDashboardView extends DashboardView {
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setBorder(new EmptyBorder(0, 10, 0, 10));
-                setOpaque(false);
-                setForeground(TEXT_PRIMARY);
+                if (isSelected) {
+                    setOpaque(true);
+                    setBackground(table.getSelectionBackground());
+                    setForeground(table.getSelectionForeground());
+                } else {
+                    setOpaque(false);
+                    setForeground(TEXT_PRIMARY);
+                }
                 if (column == 0) {
                     setHorizontalAlignment(SwingConstants.CENTER);
                 } else {
@@ -176,6 +197,15 @@ public class ManagerDashboardView extends DashboardView {
     public void addApproveTaskListener(ActionListener listener) {
         if (listener != null) {
             btnApproveTask.addActionListener(listener);
+        }
+    }
+
+    /**
+     * Binds action listener for the Logout action.
+     */
+    public void addLogoutListener(ActionListener listener) {
+        if (listener != null) {
+            btnLogout.addActionListener(listener);
         }
     }
 

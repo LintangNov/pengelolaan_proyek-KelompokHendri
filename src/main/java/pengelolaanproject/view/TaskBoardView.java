@@ -185,7 +185,7 @@ public class TaskBoardView extends JPanel {
                 "Task Deliverable Submission",
                 JOptionPane.QUESTION_MESSAGE
         );
-        return input != null ? input.trim() : "";
+        return input;
     }
 
     /**
@@ -233,8 +233,8 @@ public class TaskBoardView extends JPanel {
         card.setOpaque(false);
         card.setLayout(new BorderLayout(8, 8));
         card.setBorder(new EmptyBorder(12, 12, 12, 12));
-        card.setMaximumSize(new Dimension(320, 115));
-        card.setPreferredSize(new Dimension(180, 115));
+        card.setMaximumSize(new Dimension(320, 160));
+        card.setPreferredSize(new Dimension(180, 160));
 
         // Title Label
         JLabel lblTitle = new JLabel(task.getTitle());
@@ -261,13 +261,50 @@ public class TaskBoardView extends JPanel {
         detailsPanel.add(Box.createRigidArea(new Dimension(0, 2)));
         detailsPanel.add(lblDueDate);
 
+        // Description
+        if (task.getDescription() != null && !task.getDescription().trim().isEmpty()) {
+            JLabel lblDesc = new JLabel("<html><i>" + task.getDescription() + "</i></html>");
+            lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+            lblDesc.setForeground(TEXT_SECONDARY);
+            detailsPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+            detailsPanel.add(lblDesc);
+        }
+
+        // Notes
+        if (task.getNotes() != null && !task.getNotes().trim().isEmpty()) {
+            JLabel lblNotes = new JLabel("<html><b>Notes:</b> " + task.getNotes() + "</html>");
+            lblNotes.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+            lblNotes.setForeground(TEXT_SECONDARY);
+            detailsPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+            detailsPanel.add(lblNotes);
+        }
+
         // Render URL badge if available
         if (task.getSubmissionLink() != null && !task.getSubmissionLink().trim().isEmpty()) {
-            JLabel lblLink = new JLabel("✦ Submission Active");
-            lblLink.setFont(new Font("Segoe UI", Font.BOLD, 9));
-            lblLink.setForeground(ACCENT_CYAN);
+            JButton btnOpenLink = new JButton("<html><u>✦ Open Submission</u></html>") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                }
+            };
+            btnOpenLink.setFont(new Font("Segoe UI", Font.BOLD, 9));
+            btnOpenLink.setForeground(ACCENT_CYAN);
+            btnOpenLink.setContentAreaFilled(false);
+            btnOpenLink.setFocusPainted(false);
+            btnOpenLink.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+            btnOpenLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnOpenLink.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            btnOpenLink.addActionListener(evt -> {
+                try {
+                    java.awt.Desktop.getDesktop().browse(new java.net.URI(task.getSubmissionLink()));
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(TaskBoardView.this, "Cannot open link: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
             detailsPanel.add(Box.createRigidArea(new Dimension(0, 4)));
-            detailsPanel.add(lblLink);
+            detailsPanel.add(btnOpenLink);
         }
 
         card.add(detailsPanel, BorderLayout.CENTER);
@@ -294,30 +331,16 @@ public class TaskBoardView extends JPanel {
         // Wire JPopupMenu to select movement destination
         btnMove.addActionListener(e -> {
             JPopupMenu popup = new JPopupMenu();
-            popup.setBackground(INPUT_BG);
-            popup.setBorder(BorderFactory.createLineBorder(INPUT_BORDER));
 
             for (TaskStatus status : TaskStatus.values()) {
                 if (status != task.getStatus()) {
                     JMenuItem item = new JMenuItem("Move to " + status.name().replace("_", " "));
                     item.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                    item.setForeground(TEXT_PRIMARY);
-                    item.setBackground(INPUT_BG);
                     
                     item.addActionListener(evt -> {
                         // Capture UI context
                         this.activeTaskForMove = task;
                         this.activeTargetStatus = status;
-                        this.activeSubmissionLink = "";
-
-                        // Handle transition prompt if moving to REVIEW
-                        if (status == TaskStatus.REVIEW) {
-                            String url = promptSubmissionLink();
-                            if (url == null) {
-                                return; // Cancel change
-                            }
-                            this.activeSubmissionLink = url;
-                        }
 
                         // Notify registered observers/controllers
                         java.awt.event.ActionEvent actionEvent = new java.awt.event.ActionEvent(
