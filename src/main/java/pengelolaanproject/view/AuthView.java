@@ -54,11 +54,11 @@ public class AuthView extends JFrame {
         cardPanel.setLayout(new BoxLayout(cardPanel, BoxLayout.Y_AXIS));
         cardPanel.setBorder(new EmptyBorder(40, 30, 40, 30));
 
-        // 1. Header (Logo / Title / Subtitle)
-        JLabel lblLogo = new JLabel("✦", SwingConstants.CENTER);
-        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        lblLogo.setForeground(ACCENT_CYAN);
-        lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
+//        // 1. Header (Logo / Title / Subtitle)
+//        JLabel lblLogo = new JLabel("", SwingConstants.CENTER);
+//        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 36));
+//        lblLogo.setForeground(ACCENT_CYAN);
+//        lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel lblTitle = new JLabel("Welcome Back", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
@@ -125,7 +125,7 @@ public class AuthView extends JFrame {
         btnRegisterLink.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Assembly
-        cardPanel.add(lblLogo);
+        // cardPanel.add(lblLogo);
         cardPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         cardPanel.add(lblTitle);
         cardPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -146,9 +146,11 @@ public class AuthView extends JFrame {
         field.setForeground(TEXT_PRIMARY);
         field.setCaretColor(ACCENT_CYAN);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setPreferredSize(new Dimension(320, 42));
+        field.setMaximumSize(new Dimension(320, 42));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(5, 12, 5, 12)
+                BorderFactory.createEmptyBorder(4, 12, 8, 12)
         ));
         return field;
     }
@@ -159,9 +161,11 @@ public class AuthView extends JFrame {
         field.setForeground(TEXT_PRIMARY);
         field.setCaretColor(ACCENT_CYAN);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setPreferredSize(new Dimension(320, 42));
+        field.setMaximumSize(new Dimension(320, 42));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(5, 12, 5, 12)
+                BorderFactory.createEmptyBorder(4, 12, 8, 12)
         ));
         return field;
     }
@@ -179,7 +183,7 @@ public class AuthView extends JFrame {
         if (message == null || message.trim().isEmpty()) {
             lblError.setText(" ");
         } else {
-            lblError.setText("⚠ " + message);
+            lblError.setText(message);
         }
     }
 

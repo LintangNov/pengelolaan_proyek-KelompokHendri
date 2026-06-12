@@ -25,9 +25,9 @@ public class DataLayerTest {
 
         try {
             runModelTests();
-            System.out.println("✅ Model logic tests passed successfully.");
+            System.out.println(" Model logic tests passed successfully.");
         } catch (Exception e) {
-            System.err.println("❌ Model logic tests failed: " + e.getMessage());
+            System.err.println(" Model logic tests failed: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
@@ -39,12 +39,12 @@ public class DataLayerTest {
                 System.out.println("Live database connection established. Running repository integration tests...");
                 setupTestDatabase(conn);
                 runRepositoryTests(conn);
-                System.out.println("✅ Repository integration tests passed successfully.");
+                System.out.println(" Repository integration tests passed successfully.");
             } else {
-                System.out.println("⚠️ Skipping database tests: MySQL is offline or database is not running.");
+                System.out.println(" Skipping database tests: MySQL is offline or database is not running.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Repository tests failed: " + e.getMessage());
+            System.err.println(" Repository tests failed: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
@@ -59,17 +59,24 @@ public class DataLayerTest {
 
         // 1. TaskModel tests
         TaskModel task = new TaskModel("Implement Login Page", 3);
-        if (task.getId() != 0) throw new AssertionError("Task ID should default to 0");
-        if (!task.getTitle().equals("Implement Login Page")) throw new AssertionError("Task title does not match");
-        if (task.getStatus() != TaskStatus.TODO) throw new AssertionError("Task status should default to TODO");
-        if (task.getAssigneeId() != 3) throw new AssertionError("Task assignee ID does not match");
-        if (!task.getSubmissionLink().equals("")) throw new AssertionError("Task submission link should default to empty string");
+        if (task.getId() != 0)
+            throw new AssertionError("Task ID should default to 0");
+        if (!task.getTitle().equals("Implement Login Page"))
+            throw new AssertionError("Task title does not match");
+        if (task.getStatus() != TaskStatus.TODO)
+            throw new AssertionError("Task status should default to TODO");
+        if (task.getAssigneeId() != 3)
+            throw new AssertionError("Task assignee ID does not match");
+        if (!task.getSubmissionLink().equals(""))
+            throw new AssertionError("Task submission link should default to empty string");
 
         task.updateStatus(TaskStatus.IN_PROGRESS);
-        if (task.getStatus() != TaskStatus.IN_PROGRESS) throw new AssertionError("Task status update failed");
+        if (task.getStatus() != TaskStatus.IN_PROGRESS)
+            throw new AssertionError("Task status update failed");
 
         task.setSubmissionLink("https://github.com/lintang_dev/project");
-        if (!task.getSubmissionLink().equals("https://github.com/lintang_dev/project")) throw new AssertionError("Task submission link set failed");
+        if (!task.getSubmissionLink().equals("https://github.com/lintang_dev/project"))
+            throw new AssertionError("Task submission link set failed");
 
         // 2. ProjectModel tests
         Calendar cal = Calendar.getInstance();
@@ -77,15 +84,22 @@ public class DataLayerTest {
         Date deadline = cal.getTime();
 
         ProjectModel project = new ProjectModel("E-Commerce Web Application", deadline);
-        if (project.getId() != 0) throw new AssertionError("Project ID should default to 0");
-        if (!project.getName().equals("E-Commerce Web Application")) throw new AssertionError("Project name does not match");
-        if (project.getDeadline() != deadline) throw new AssertionError("Project deadline does not match");
-        if (project.getStartDate() == null) throw new AssertionError("Project start date should be auto-initialized");
-        if (project.getTasks().size() != 0) throw new AssertionError("Project tasks list should default to empty");
+        if (project.getId() != 0)
+            throw new AssertionError("Project ID should default to 0");
+        if (!project.getName().equals("E-Commerce Web Application"))
+            throw new AssertionError("Project name does not match");
+        if (project.getDeadline() != deadline)
+            throw new AssertionError("Project deadline does not match");
+        if (project.getStartDate() == null)
+            throw new AssertionError("Project start date should be auto-initialized");
+        if (project.getTasks().size() != 0)
+            throw new AssertionError("Project tasks list should default to empty");
 
         project.addTask(task);
-        if (project.getTasks().size() != 1) throw new AssertionError("Project tasks list size should be 1 after addTask");
-        if (project.getTasks().get(0) != task) throw new AssertionError("Task added does not match");
+        if (project.getTasks().size() != 1)
+            throw new AssertionError("Project tasks list size should be 1 after addTask");
+        if (project.getTasks().get(0) != task)
+            throw new AssertionError("Task added does not match");
 
         // Verify task list immutability contract
         try {
@@ -136,7 +150,8 @@ public class DataLayerTest {
 
         repository.saveProject(project);
         int projectId = project.getId();
-        if (projectId <= 0) throw new AssertionError("Project ID was not generated and set after saving");
+        if (projectId <= 0)
+            throw new AssertionError("Project ID was not generated and set after saving");
         System.out.println("Project saved with generated ID: " + projectId);
 
         // 2. Save task
@@ -148,19 +163,26 @@ public class DataLayerTest {
 
         repository.saveTask(task1, projectId);
         int task1Id = task1.getId();
-        if (task1Id <= 0) throw new AssertionError("Task ID was not generated and set after saving");
+        if (task1Id <= 0)
+            throw new AssertionError("Task ID was not generated and set after saving");
         System.out.println("Task saved with generated ID: " + task1Id);
 
         // 3. Find project by ID
         ProjectModel retrievedProject = repository.findProjectById(projectId);
-        if (retrievedProject == null) throw new AssertionError("Failed to retrieve project by ID");
-        if (!retrievedProject.getName().equals("Integration Test Project")) throw new AssertionError("Retrieved project name mismatch");
-        if (retrievedProject.getTasks().size() != 1) throw new AssertionError("Retrieved project tasks list size mismatch");
+        if (retrievedProject == null)
+            throw new AssertionError("Failed to retrieve project by ID");
+        if (!retrievedProject.getName().equals("Integration Test Project"))
+            throw new AssertionError("Retrieved project name mismatch");
+        if (retrievedProject.getTasks().size() != 1)
+            throw new AssertionError("Retrieved project tasks list size mismatch");
 
         TaskModel retrievedTask = retrievedProject.getTasks().get(0);
-        if (retrievedTask.getId() != task1Id) throw new AssertionError("Retrieved task ID mismatch");
-        if (!retrievedTask.getTitle().equals("Setup Database Connection")) throw new AssertionError("Retrieved task title mismatch");
-        if (retrievedTask.getStatus() != TaskStatus.TODO) throw new AssertionError("Retrieved task status mismatch");
+        if (retrievedTask.getId() != task1Id)
+            throw new AssertionError("Retrieved task ID mismatch");
+        if (!retrievedTask.getTitle().equals("Setup Database Connection"))
+            throw new AssertionError("Retrieved task title mismatch");
+        if (retrievedTask.getStatus() != TaskStatus.TODO)
+            throw new AssertionError("Retrieved task status mismatch");
 
         // 4. Update task status
         retrievedTask.updateStatus(TaskStatus.IN_PROGRESS);
@@ -168,7 +190,8 @@ public class DataLayerTest {
 
         ProjectModel retrievedProject2 = repository.findProjectById(projectId);
         TaskModel retrievedTask2 = retrievedProject2.getTasks().get(0);
-        if (retrievedTask2.getStatus() != TaskStatus.IN_PROGRESS) throw new AssertionError("Task status was not updated in DB");
+        if (retrievedTask2.getStatus() != TaskStatus.IN_PROGRESS)
+            throw new AssertionError("Task status was not updated in DB");
         System.out.println("Task status updated to: " + retrievedTask2.getStatus());
 
         // 5. Find all projects
@@ -180,7 +203,8 @@ public class DataLayerTest {
                 break;
             }
         }
-        if (!found) throw new AssertionError("Saved project not found in findAllProjects list");
+        if (!found)
+            throw new AssertionError("Saved project not found in findAllProjects list");
         System.out.println("Total projects in DB: " + allProjects.size());
 
         // Clean up test data (cascade delete of tasks)
@@ -193,7 +217,8 @@ public class DataLayerTest {
 
         // Verify cascade delete
         ProjectModel postDeleteProj = repository.findProjectById(projectId);
-        if (postDeleteProj != null) throw new AssertionError("Project was not deleted");
+        if (postDeleteProj != null)
+            throw new AssertionError("Project was not deleted");
         System.out.println("Cleanup successful, cascade delete verified.");
     }
 }

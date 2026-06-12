@@ -142,28 +142,25 @@ public class RegisterView extends JPanel {
         field.setForeground(TEXT_PRIMARY);
         field.setCaretColor(ACCENT_CYAN);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setMaximumSize(new Dimension(320, 36));
-        field.setPreferredSize(new Dimension(320, 36));
+        field.setMaximumSize(new Dimension(320, 42));
+        field.setPreferredSize(new Dimension(320, 42));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(4, 10, 4, 10)
-        ));
+                BorderFactory.createEmptyBorder(4, 10, 8, 10)));
 
         field.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(ACCENT_CYAN, 1),
-                        BorderFactory.createEmptyBorder(4, 10, 4, 10)
-                ));
+                        BorderFactory.createEmptyBorder(4, 10, 8, 10)));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                        BorderFactory.createEmptyBorder(4, 10, 4, 10)
-                ));
+                        BorderFactory.createEmptyBorder(4, 10, 8, 10)));
             }
         });
         return field;
@@ -175,28 +172,25 @@ public class RegisterView extends JPanel {
         field.setForeground(TEXT_PRIMARY);
         field.setCaretColor(ACCENT_CYAN);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setMaximumSize(new Dimension(320, 36));
-        field.setPreferredSize(new Dimension(320, 36));
+        field.setMaximumSize(new Dimension(320, 42));
+        field.setPreferredSize(new Dimension(320, 42));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(4, 10, 4, 10)
-        ));
+                BorderFactory.createEmptyBorder(4, 10, 8, 10)));
 
         field.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(ACCENT_CYAN, 1),
-                        BorderFactory.createEmptyBorder(4, 10, 4, 10)
-                ));
+                        BorderFactory.createEmptyBorder(4, 10, 8, 10)));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                        BorderFactory.createEmptyBorder(4, 10, 4, 10)
-                ));
+                        BorderFactory.createEmptyBorder(4, 10, 8, 10)));
             }
         });
         return field;
@@ -224,7 +218,7 @@ public class RegisterView extends JPanel {
         if (error == null || error.trim().isEmpty()) {
             lblError.setText(" ");
         } else {
-            lblError.setText("⚠ " + error);
+            lblError.setText(error);
         }
     }
 
