@@ -28,6 +28,7 @@ public class TaskBoardView extends JPanel {
     private final List<ActionListener> statusChangeListeners = new ArrayList<>();
     private final List<ActionListener> assignTaskListeners = new ArrayList<>();
     private DashboardView.GradientButton btnAssignTask;
+    private JLabel lblProjectStatusBadge;
     
     // UI Event Context state variables for the Controller to query upon action trigger
     private TaskModel activeTaskForMove;
@@ -62,15 +63,41 @@ public class TaskBoardView extends JPanel {
         titlePanel.setOpaque(false);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
+        lblProjectStatusBadge = new JLabel("STATUS: AKTIF") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(255, 255, 255, 15));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2d.setColor(new Color(255, 255, 255, 30));
+                g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        lblProjectStatusBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lblProjectStatusBadge.setForeground(ACCENT_CYAN);
+        lblProjectStatusBadge.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+        lblProjectStatusBadge.setOpaque(false);
+
+        JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        titleRow.setOpaque(false);
+        titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JLabel lblTitle = new JLabel("Task Kanban Board");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(TEXT_PRIMARY);
 
+        titleRow.add(lblTitle);
+        titleRow.add(lblProjectStatusBadge);
+
         JLabel lblSubtitle = new JLabel("Visualisasi progress task. Klik Pindah pada kartu untuk update status.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SECONDARY);
+        lblSubtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        titlePanel.add(lblTitle);
+        titlePanel.add(titleRow);
         titlePanel.add(Box.createRigidArea(new Dimension(0, 6)));
         titlePanel.add(lblSubtitle);
 
@@ -407,6 +434,17 @@ public class TaskBoardView extends JPanel {
         card.add(btnPanel, BorderLayout.SOUTH);
 
         return card;
+    }
+
+    public void setProjectStatus(String statusStr) {
+        if (lblProjectStatusBadge != null) {
+            lblProjectStatusBadge.setText(statusStr != null ? statusStr.toUpperCase() : "AKTIF");
+            if ("SELESAI".equals(statusStr)) {
+                lblProjectStatusBadge.setForeground(new Color(40, 199, 111)); // Elegant Green
+            } else {
+                lblProjectStatusBadge.setForeground(ACCENT_CYAN); // Elegant Cyan for AKTIF
+            }
+        }
     }
 
     @Override

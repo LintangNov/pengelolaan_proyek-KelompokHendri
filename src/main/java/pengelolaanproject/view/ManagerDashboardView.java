@@ -1,6 +1,7 @@
 package pengelolaanproject.view;
 
 import pengelolaanproject.model.ProjectModel;
+import pengelolaanproject.model.ProjectStatus;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,6 +25,7 @@ public class ManagerDashboardView extends DashboardView {
     private DefaultTableModel tableModel;
     private GradientButton btnCreateProject;
     private GradientButton btnEditProject;
+    private GradientButton btnSelesaikanProject;
     private GradientButton btnLogout;
     private List<ProjectModel> currentProjects;
 
@@ -82,7 +84,7 @@ public class ManagerDashboardView extends DashboardView {
         cardPanel.add(lblTableTitle, BorderLayout.NORTH);
 
         // Initialize custom premium JTable
-        String[] columns = {"ID", "Nama Project", "Tanggal Mulai", "Tenggat Waktu", "Total Task"};
+        String[] columns = {"ID", "Nama Project", "Tanggal Mulai", "Tenggat Waktu", "Total Task", "Status"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -125,10 +127,18 @@ public class ManagerDashboardView extends DashboardView {
                     setOpaque(false);
                     setForeground(TEXT_PRIMARY);
                 }
-                if (column == 0) {
+                if (column == 0 || column == 5) {
                     setHorizontalAlignment(SwingConstants.CENTER);
                 } else {
                     setHorizontalAlignment(SwingConstants.LEFT);
+                }
+                if (column == 5 && !isSelected) {
+                    String val = String.valueOf(value);
+                    if ("SELESAI".equals(val)) {
+                        setForeground(new Color(40, 199, 111)); // Elegant Green
+                    } else {
+                        setForeground(ACCENT_CYAN); // Elegant Cyan for AKTIF
+                    }
                 }
                 return c;
             }
@@ -154,13 +164,17 @@ public class ManagerDashboardView extends DashboardView {
         footerPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
 
         btnCreateProject = new GradientButton("Buat Project");
-        btnCreateProject.setPreferredSize(new Dimension(150, 42));
+        btnCreateProject.setPreferredSize(new Dimension(130, 42));
 
         btnEditProject = new GradientButton("Edit Project");
-        btnEditProject.setPreferredSize(new Dimension(130, 42));
+        btnEditProject.setPreferredSize(new Dimension(120, 42));
+
+        btnSelesaikanProject = new GradientButton("Selesaikan Project");
+        btnSelesaikanProject.setPreferredSize(new Dimension(160, 42));
 
         footerPanel.add(btnCreateProject);
         footerPanel.add(btnEditProject);
+        footerPanel.add(btnSelesaikanProject);
         add(footerPanel, BorderLayout.SOUTH);
     }
 
@@ -179,6 +193,10 @@ public class ManagerDashboardView extends DashboardView {
 
     public void addEditProjectListener(ActionListener listener) {
         if (listener != null) btnEditProject.addActionListener(listener);
+    }
+
+    public void addSelesaikanProjectListener(ActionListener listener) {
+        if (listener != null) btnSelesaikanProject.addActionListener(listener);
     }
 
     /**
@@ -203,13 +221,15 @@ public class ManagerDashboardView extends DashboardView {
             String startDateStr = project.getStartDate() != null ? df.format(project.getStartDate()) : "-";
             String deadlineStr = project.getDeadline() != null ? df.format(project.getDeadline()) : "-";
             int tasksCount = project.getTasks() != null ? project.getTasks().size() : 0;
+            String statusStr = project.getStatus() != null ? project.getStatus().name() : "AKTIF";
 
             tableModel.addRow(new Object[]{
                     project.getId(),
                     project.getName(),
                     startDateStr,
                     deadlineStr,
-                    tasksCount
+                    tasksCount,
+                    statusStr
             });
         }
     }

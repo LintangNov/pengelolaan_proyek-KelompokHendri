@@ -1,6 +1,7 @@
 package pengelolaanproject.repository;
 
 import pengelolaanproject.model.ProjectModel;
+import pengelolaanproject.model.ProjectStatus;
 import pengelolaanproject.model.TaskModel;
 import pengelolaanproject.model.TaskStatus;
 
@@ -23,6 +24,11 @@ public class ProjectRepository implements IProjectRepository {
      */
     public ProjectRepository(Connection connection) {
         this.connection = connection;
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("ALTER TABLE PROJECTS ADD COLUMN status VARCHAR(50) DEFAULT 'AKTIF'");
+        } catch (SQLException e) {
+            // Silence exception if column already exists (SQLState 42S21 / Error 1060)
+        }
     }
 
     @Override
@@ -31,7 +37,7 @@ public class ProjectRepository implements IProjectRepository {
             return;
         }
         if (project.getId() == 0) {
-            String query = "INSERT INTO PROJECTS (name, start_date, deadline) VALUES (?, ?, ?)";
+            String query = "INSERT INTO PROJECTS (name, start_date, deadline, status) VALUES (?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, project.getName());
                 if (project.getStartDate() == null) {
@@ -44,6 +50,7 @@ public class ProjectRepository implements IProjectRepository {
                 } else {
                     stmt.setDate(3, new java.sql.Date(project.getDeadline().getTime()));
                 }
+                stmt.setString(4, project.getStatus() != null ? project.getStatus().name() : "AKTIF");
 
                 stmt.executeUpdate();
 
@@ -56,7 +63,7 @@ public class ProjectRepository implements IProjectRepository {
                 System.err.println("SQL Exception in saveProject (insert): " + e.getMessage());
             }
         } else {
-            String query = "UPDATE PROJECTS SET name = ?, start_date = ?, deadline = ? WHERE id = ?";
+            String query = "UPDATE PROJECTS SET name = ?, start_date = ?, deadline = ?, status = ? WHERE id = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, project.getName());
                 if (project.getStartDate() == null) {
@@ -69,7 +76,8 @@ public class ProjectRepository implements IProjectRepository {
                 } else {
                     stmt.setDate(3, new java.sql.Date(project.getDeadline().getTime()));
                 }
-                stmt.setInt(4, project.getId());
+                stmt.setString(4, project.getStatus() != null ? project.getStatus().name() : "AKTIF");
+                stmt.setInt(5, project.getId());
 
                 stmt.executeUpdate();
             } catch (SQLException e) {
@@ -80,7 +88,7 @@ public class ProjectRepository implements IProjectRepository {
 
     @Override
     public ProjectModel findProjectById(int id) {
-        String query = "SELECT id, name, start_date, deadline FROM PROJECTS WHERE id = ?";
+        String query = "SELECT id, name, start_date, deadline, status FROM PROJECTS WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -88,7 +96,9 @@ public class ProjectRepository implements IProjectRepository {
                     String name = rs.getString("name");
                     Date startDate = rs.getDate("start_date");
                     Date deadline = rs.getDate("deadline");
-                    ProjectModel project = new ProjectModel(id, name, startDate, deadline);
+                    String statusStr = rs.getString("status");
+                    ProjectStatus status = ProjectStatus.fromString(statusStr);
+                    ProjectModel project = new ProjectModel(id, name, startDate, deadline, status);
                     loadTasksForProject(project);
                     return project;
                 }
@@ -102,7 +112,7 @@ public class ProjectRepository implements IProjectRepository {
     @Override
     public List<ProjectModel> findAllProjects() {
         List<ProjectModel> projects = new ArrayList<>();
-        String query = "SELECT id, name, start_date, deadline FROM PROJECTS";
+        String query = "SELECT id, name, start_date, deadline, status FROM PROJECTS";
         try (PreparedStatement stmt = connection.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
@@ -110,7 +120,9 @@ public class ProjectRepository implements IProjectRepository {
                 String name = rs.getString("name");
                 Date startDate = rs.getDate("start_date");
                 Date deadline = rs.getDate("deadline");
-                ProjectModel project = new ProjectModel(id, name, startDate, deadline);
+                String statusStr = rs.getString("status");
+                ProjectStatus status = ProjectStatus.fromString(statusStr);
+                ProjectModel project = new ProjectModel(id, name, startDate, deadline, status);
                 loadTasksForProject(project);
                 projects.add(project);
             }

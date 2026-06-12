@@ -5,6 +5,7 @@ import pengelolaanproject.core.DatabaseConnection;
 import pengelolaanproject.core.SessionManager;
 import pengelolaanproject.core.UserRole;
 import pengelolaanproject.model.ProjectModel;
+import pengelolaanproject.model.ProjectStatus;
 import pengelolaanproject.model.TaskModel;
 import pengelolaanproject.model.TaskStatus;
 import pengelolaanproject.model.User;
@@ -112,6 +113,7 @@ public class DashboardController extends BaseController {
             // Wire manager quick actions
             this.managerView.addCreateProjectListener(new CreateProjectButtonListener());
             this.managerView.addEditProjectListener(new EditProjectButtonListener());
+            this.managerView.addSelesaikanProjectListener(new SelesaikanProjectButtonListener());
             this.managerView.addLogoutListener(new LogoutButtonListener());
 
             // Double-click table row to view Kanban Board
@@ -244,10 +246,27 @@ public class DashboardController extends BaseController {
             JTextField txtStart    = new JTextField(project.getStartDate() != null ? df.format(project.getStartDate()) : "");
             JTextField txtDeadline = new JTextField(project.getDeadline()  != null ? df.format(project.getDeadline())  : "");
 
-            JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
+            JComboBox<ProjectStatus> cmbStatus = new JComboBox<>(ProjectStatus.values());
+            cmbStatus.setSelectedItem(project.getStatus() != null ? project.getStatus() : ProjectStatus.AKTIF);
+            cmbStatus.setForeground(new Color(34, 40, 49));
+            cmbStatus.setBackground(Color.WHITE);
+            cmbStatus.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (!isSelected) {
+                        c.setForeground(new Color(34, 40, 49));
+                        c.setBackground(Color.WHITE);
+                    }
+                    return c;
+                }
+            });
+
+            JPanel form = new JPanel(new GridLayout(4, 2, 8, 8));
             form.add(new JLabel("Nama Project:"));    form.add(txtName);
             form.add(new JLabel("Start Date (YYYY-MM-DD):")); form.add(txtStart);
             form.add(new JLabel("Deadline (YYYY-MM-DD):")); form.add(txtDeadline);
+            form.add(new JLabel("Status Project:")); form.add(cmbStatus);
 
             int result = JOptionPane.showConfirmDialog(
                 mainFrame, form,
@@ -295,10 +314,13 @@ public class DashboardController extends BaseController {
                 return;
             }
 
+            ProjectStatus newStatus = (ProjectStatus) cmbStatus.getSelectedItem();
+
             try {
                 project.setName(newName);
                 project.setDeadline(newDeadline);
                 project.setStartDate(newStartDate);
+                project.setStatus(newStatus);
                 repository.saveProject(project);
                 JOptionPane.showMessageDialog(mainFrame,
                     "Project berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
@@ -306,6 +328,49 @@ public class DashboardController extends BaseController {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(mainFrame,
                     "Gagal menyimpan: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private class SelesaikanProjectButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ProjectModel project = managerView.getSelectedProject();
+            if (project == null) {
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Pilih project dari tabel terlebih dahulu.",
+                    "Tidak Ada Project Dipilih", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (project.getStatus() == ProjectStatus.SELESAI) {
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Project ini sudah selesai.",
+                    "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    mainFrame,
+                    "Apakah Anda yakin ingin menyelesaikan project \"" + project.getName() + "\"?",
+                    "Konfirmasi Selesaikan Project",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    project.setStatus(ProjectStatus.SELESAI);
+                    repository.saveProject(project);
+                    JOptionPane.showMessageDialog(mainFrame,
+                        "Project \"" + project.getName() + "\" berhasil diselesaikan!",
+                        "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    refreshData();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(mainFrame,
+                        "Gagal menyelesaikan project: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
@@ -342,6 +407,19 @@ public class DashboardController extends BaseController {
 
             JComboBox<TaskStatus> cmbStatus = new JComboBox<>(options);
             cmbStatus.setSelectedItem(task.getStatus());
+            cmbStatus.setForeground(new Color(34, 40, 49));
+            cmbStatus.setBackground(Color.WHITE);
+            cmbStatus.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (!isSelected) {
+                        c.setForeground(new Color(34, 40, 49));
+                        c.setBackground(Color.WHITE);
+                    }
+                    return c;
+                }
+            });
             
             JTextArea txtNotes = new JTextArea(task.getNotes(), 3, 20);
             txtNotes.setFont(UIManager.getFont("TextField.font"));
@@ -430,6 +508,8 @@ public class DashboardController extends BaseController {
         for (User u : assignableUsers) {
             cmbAssignee.addItem(u);
         }
+        cmbAssignee.setForeground(new Color(34, 40, 49));
+        cmbAssignee.setBackground(Color.WHITE);
         // Pretty formatting for assignee selector
         cmbAssignee.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -438,6 +518,10 @@ public class DashboardController extends BaseController {
                 if (value instanceof User) {
                     User u = (User) value;
                     setText(u.getUsername() + " (" + u.getRole() + ")");
+                }
+                if (!isSelected) {
+                    setForeground(new Color(34, 40, 49));
+                    setBackground(Color.WHITE);
                 }
                 return this;
             }
@@ -528,12 +612,18 @@ public class DashboardController extends BaseController {
         boardView.addAssignTaskListener(ev -> {
             showAssignTaskDialog(project, boardFrame);
             ProjectModel refreshed = repository.findProjectById(project.getId());
-            if (refreshed != null) boardView.displayBoard(refreshed.getTasks(), userCache);
+            if (refreshed != null) {
+                boardView.setProjectStatus(refreshed.getStatus() != null ? refreshed.getStatus().name() : "AKTIF");
+                boardView.displayBoard(refreshed.getTasks(), userCache);
+            }
         });
 
         // Load project tasks
         ProjectModel loaded = repository.findProjectById(project.getId());
-        boardView.displayBoard(loaded.getTasks(), userCache);
+        if (loaded != null) {
+            boardView.setProjectStatus(loaded.getStatus() != null ? loaded.getStatus().name() : "AKTIF");
+            boardView.displayBoard(loaded.getTasks(), userCache);
+        }
 
         // Status change listener from drag/move popup on Kanban cards
         boardView.addStatusChangeListener(e -> {
@@ -551,7 +641,10 @@ public class DashboardController extends BaseController {
                 );
                 // Revert board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks(), userCache);
+                if (reset != null) {
+                    boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
+                    boardView.displayBoard(reset.getTasks(), userCache);
+                }
                 return;
             }
 
@@ -565,7 +658,10 @@ public class DashboardController extends BaseController {
                 );
                 // Revert board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks(), userCache);
+                if (reset != null) {
+                    boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
+                    boardView.displayBoard(reset.getTasks(), userCache);
+                }
                 return;
             }
 
@@ -606,7 +702,10 @@ public class DashboardController extends BaseController {
                     JOptionPane.showMessageDialog(boardFrame, "Tautan pengumpulan wajib diisi untuk review.", "Validasi", JOptionPane.ERROR_MESSAGE);
                     // Revert board display
                     ProjectModel reset = repository.findProjectById(project.getId());
-                    boardView.displayBoard(reset.getTasks(), userCache);
+                    if (reset != null) {
+                        boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
+                        boardView.displayBoard(reset.getTasks(), userCache);
+                    }
                     return;
                 }
  
@@ -621,7 +720,10 @@ public class DashboardController extends BaseController {
  
                     // Refresh Kanban Board
                     ProjectModel refreshed = repository.findProjectById(project.getId());
-                    boardView.displayBoard(refreshed.getTasks(), userCache);
+                    if (refreshed != null) {
+                        boardView.setProjectStatus(refreshed.getStatus() != null ? refreshed.getStatus().name() : "AKTIF");
+                        boardView.displayBoard(refreshed.getTasks(), userCache);
+                    }
  
                     // Refresh parent dashboard
                     refreshData();
@@ -631,7 +733,10 @@ public class DashboardController extends BaseController {
             } else {
                 // Cancelled - Reset board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks(), userCache);
+                if (reset != null) {
+                    boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
+                    boardView.displayBoard(reset.getTasks(), userCache);
+                }
             }
         });
 
