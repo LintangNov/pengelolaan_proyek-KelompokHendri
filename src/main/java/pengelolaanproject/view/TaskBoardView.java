@@ -324,7 +324,7 @@ public class TaskBoardView extends JPanel {
 
         // Render URL badge if available
         if (task.getSubmissionLink() != null && !task.getSubmissionLink().trim().isEmpty()) {
-            JButton btnOpenLink = new JButton("<html><u>Buka Pengumpulan</u></html>") {
+            JButton btnOpenLink = new JButton("<html><u>Open Submission</u></html>") {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
