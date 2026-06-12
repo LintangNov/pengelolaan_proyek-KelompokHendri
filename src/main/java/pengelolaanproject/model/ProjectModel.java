@@ -13,6 +13,7 @@ public class ProjectModel {
     private String name;
     private Date startDate;
     private Date deadline;
+    private ProjectStatus status;
     private List<TaskModel> tasks;
 
     /**
@@ -26,6 +27,7 @@ public class ProjectModel {
         this.name = name;
         this.deadline = deadline;
         this.startDate = new Date();
+        this.status = ProjectStatus.AKTIF;
         this.tasks = new ArrayList<>();
     }
 
@@ -42,6 +44,19 @@ public class ProjectModel {
         this.name = name;
         this.startDate = startDate;
         this.deadline = deadline;
+        this.status = ProjectStatus.AKTIF;
+        this.tasks = new ArrayList<>();
+    }
+
+    /**
+     * Overloaded constructor for database mapping with status.
+     */
+    public ProjectModel(int id, String name, Date startDate, Date deadline, ProjectStatus status) {
+        this.id = id;
+        this.name = name;
+        this.startDate = startDate;
+        this.deadline = deadline;
+        this.status = status != null ? status : ProjectStatus.AKTIF;
         this.tasks = new ArrayList<>();
     }
 
@@ -88,6 +103,14 @@ public class ProjectModel {
         this.deadline = deadline;
     }
 
+    public ProjectStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ProjectStatus status) {
+        this.status = status;
+    }
+
     /**
      * Adds a task to the project's task list.
      *
@@ -106,6 +129,7 @@ public class ProjectModel {
                 ", name='" + name + '\'' +
                 ", startDate=" + startDate +
                 ", deadline=" + deadline +
+                ", status=" + status +
                 ", tasksCount=" + tasks.size() +
                 '}';
     }

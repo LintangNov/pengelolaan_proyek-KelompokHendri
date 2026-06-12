@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS PROJECTS (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     start_date DATE,
-    deadline DATE
+    deadline DATE,
+    status VARCHAR(50) DEFAULT 'AKTIF'
 );
 
 -- Create TASKS table

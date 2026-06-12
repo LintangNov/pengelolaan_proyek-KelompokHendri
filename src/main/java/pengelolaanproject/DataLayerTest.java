@@ -2,6 +2,7 @@ package pengelolaanproject;
 
 import pengelolaanproject.core.DatabaseConnection;
 import pengelolaanproject.model.ProjectModel;
+import pengelolaanproject.model.ProjectStatus;
 import pengelolaanproject.model.TaskModel;
 import pengelolaanproject.model.TaskStatus;
 import pengelolaanproject.repository.IProjectRepository;
@@ -92,6 +93,11 @@ public class DataLayerTest {
             throw new AssertionError("Project deadline does not match");
         if (project.getStartDate() == null)
             throw new AssertionError("Project start date should be auto-initialized");
+        if (project.getStatus() != ProjectStatus.AKTIF)
+            throw new AssertionError("Project status should default to AKTIF");
+        project.setStatus(ProjectStatus.SELESAI);
+        if (project.getStatus() != ProjectStatus.SELESAI)
+            throw new AssertionError("Project status update failed");
         if (project.getTasks().size() != 0)
             throw new AssertionError("Project tasks list should default to empty");
 
@@ -118,7 +124,8 @@ public class DataLayerTest {
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "name VARCHAR(255) NOT NULL," +
                     "start_date DATE," +
-                    "deadline DATE" +
+                    "deadline DATE," +
+                    "status VARCHAR(50) DEFAULT 'AKTIF'" +
                     ")");
 
             // Create TASKS table
@@ -173,7 +180,18 @@ public class DataLayerTest {
             throw new AssertionError("Failed to retrieve project by ID");
         if (!retrievedProject.getName().equals("Integration Test Project"))
             throw new AssertionError("Retrieved project name mismatch");
-        if (retrievedProject.getTasks().size() != 1)
+        if (retrievedProject.getStatus() != ProjectStatus.AKTIF)
+            throw new AssertionError("Retrieved project status mismatch");
+
+        // Test project status update in repository
+        retrievedProject.setStatus(ProjectStatus.SELESAI);
+        repository.saveProject(retrievedProject);
+
+        ProjectModel retrievedProjectAfterStatusUpdate = repository.findProjectById(projectId);
+        if (retrievedProjectAfterStatusUpdate.getStatus() != ProjectStatus.SELESAI)
+            throw new AssertionError("Project status was not updated to SELESAI in database");
+
+        if (retrievedProjectAfterStatusUpdate.getTasks().size() != 1)
             throw new AssertionError("Retrieved project tasks list size mismatch");
 
         TaskModel retrievedTask = retrievedProject.getTasks().get(0);
