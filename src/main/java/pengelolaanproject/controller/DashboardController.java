@@ -49,6 +49,8 @@ public class DashboardController extends BaseController {
     // Maps taskId to projectId for member views where project scope is not directly available
     private final Map<Integer, Integer> taskProjectMap = new HashMap<>();
 
+    private Map<Integer, User> userCache = new HashMap<>();
+
     /**
      * Constructs the controller, initializes the main app frame, and setups the workspace based on user role.
      *
@@ -71,11 +73,33 @@ public class DashboardController extends BaseController {
         this.mainFrame.setLocationRelativeTo(null);
 
         if (currentUser == null) {
-            JOptionPane.showMessageDialog(null, "No active user session found. Exiting.", "Session Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Sesi pengguna aktif tidak ditemukan. Keluar.", "Error Sesi", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
 
+        loadUserCache();
         initializeWorkspace();
+    }
+
+    private void loadUserCache() {
+        userCache.clear();
+        String query = "SELECT id, username, role FROM USERS";
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null) return;
+        try (PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                User u = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    "",
+                    UserRole.fromString(rs.getString("role"))
+                );
+                userCache.put(u.getId(), u);
+            }
+        } catch (SQLException ex) {
+            System.err.println("Failed to load user cache: " + ex.getMessage());
+        }
     }
 
     /**
@@ -87,8 +111,7 @@ public class DashboardController extends BaseController {
 
             // Wire manager quick actions
             this.managerView.addCreateProjectListener(new CreateProjectButtonListener());
-            this.managerView.addAssignTaskListener(new AssignTaskButtonListener());
-            this.managerView.addApproveTaskListener(new ApproveTaskButtonListener());
+            this.managerView.addEditProjectListener(new EditProjectButtonListener());
             this.managerView.addLogoutListener(new LogoutButtonListener());
 
             // Double-click table row to view Kanban Board
@@ -150,16 +173,19 @@ public class DashboardController extends BaseController {
             managerView.displayProjects(projects);
         } else {
             List<ProjectModel> allProjects = repository.findAllProjects();
-            List<TaskModel> memberTasks = new ArrayList<>();
+            List<TaskModel> visibleTasks = new ArrayList<>();
             taskProjectMap.clear();
 
             for (ProjectModel project : allProjects) {
                 for (TaskModel task : project.getTasks()) {
-                    memberTasks.add(task);
-                    taskProjectMap.put(task.getId(), project.getId());
+                    User assignee = userCache.get(task.getAssigneeId());
+                    if (assignee != null && assignee.getRole() == currentUser.getRole()) {
+                        visibleTasks.add(task);
+                        taskProjectMap.put(task.getId(), project.getId());
+                    }
                 }
             }
-            memberView.displayTasks(memberTasks);
+            memberView.displayTasks(visibleTasks, userCache);
         }
     }
 
@@ -201,188 +227,85 @@ public class DashboardController extends BaseController {
         }
     }
 
-    /**
-     * Action handler for Task Assignment. Prompts for details and saves new task.
-     */
-    private class AssignTaskButtonListener implements ActionListener {
+    private class EditProjectButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             ProjectModel project = managerView.getSelectedProject();
             if (project == null) {
-                JOptionPane.showMessageDialog(mainFrame, "Please select a project from the table first.", "No Project Selected", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Pilih project dari tabel terlebih dahulu.",
+                    "Tidak Ada Project Dipilih", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Retrieve assignable users (DEV, UIUX) from database to prevent input errors
-            List<User> assignableUsers = getAssignableUsers();
-            if (assignableUsers.isEmpty()) {
-                JOptionPane.showMessageDialog(mainFrame, "No assignable developers or designers found in the system.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
-            // Construct form UI
-            JTextField txtTitle = new JTextField();
-            JTextArea txtDesc = new JTextArea(3, 20);
-            txtDesc.setFont(UIManager.getFont("TextField.font"));
-            txtDesc.setLineWrap(true);
-            txtDesc.setWrapStyleWord(true);
-            JScrollPane descScroll = new JScrollPane(txtDesc);
+            JTextField txtName     = new JTextField(project.getName());
+            JTextField txtStart    = new JTextField(project.getStartDate() != null ? df.format(project.getStartDate()) : "");
+            JTextField txtDeadline = new JTextField(project.getDeadline()  != null ? df.format(project.getDeadline())  : "");
 
-            JComboBox<User> cmbAssignee = new JComboBox<>();
-            for (User u : assignableUsers) {
-                cmbAssignee.addItem(u);
-            }
-            // Pretty formatting for assignee selector
-            cmbAssignee.setRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (value instanceof User) {
-                        User u = (User) value;
-                        setText(u.getUsername() + " (" + u.getRole() + ")");
-                    }
-                    return this;
-                }
-            });
-
-            JTextField txtDueDate = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-
-            JPanel formPanel = new JPanel(new GridLayout(4, 2, 8, 8));
-            formPanel.add(new JLabel("Task Title:"));
-            formPanel.add(txtTitle);
-            formPanel.add(new JLabel("Description (Optional):"));
-            formPanel.add(descScroll);
-            formPanel.add(new JLabel("Assignee:"));
-            formPanel.add(cmbAssignee);
-            formPanel.add(new JLabel("Due Date (YYYY-MM-DD):"));
-            formPanel.add(txtDueDate);
+            JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
+            form.add(new JLabel("Nama Project:"));    form.add(txtName);
+            form.add(new JLabel("Start Date (YYYY-MM-DD):")); form.add(txtStart);
+            form.add(new JLabel("Deadline (YYYY-MM-DD):")); form.add(txtDeadline);
 
             int result = JOptionPane.showConfirmDialog(
-                    mainFrame,
-                    formPanel,
-                    "Assign New Task to " + project.getName(),
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
+                mainFrame, form,
+                "Edit Project: " + project.getName(),
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
             );
 
-            if (result == JOptionPane.OK_OPTION) {
-                String title = txtTitle.getText().trim();
-                String description = txtDesc.getText().trim();
-                User assignee = (User) cmbAssignee.getSelectedItem();
-                String dueDateStr = txtDueDate.getText().trim();
+            if (result != JOptionPane.OK_OPTION) return;
 
-                // Validation
-                if (title.isEmpty()) {
-                    JOptionPane.showMessageDialog(mainFrame, "Task title cannot be empty.", "Validation Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (assignee == null) {
-                    JOptionPane.showMessageDialog(mainFrame, "Assignee is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+            String newName = txtName.getText().trim();
+            if (newName.isEmpty()) {
+                JOptionPane.showMessageDialog(mainFrame, "Nama project tidak boleh kosong.",
+                    "Validasi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-                Date dueDate;
+            Date newDeadline  = null;
+            Date newStartDate = project.getStartDate();
+
+            if (!txtDeadline.getText().trim().isEmpty()) {
                 try {
-                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-                    df.setLenient(false);
-                    dueDate = df.parse(dueDateStr);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    sdf.setLenient(false);
+                    newDeadline = sdf.parse(txtDeadline.getText().trim());
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(mainFrame, "Invalid due date format. Please use YYYY-MM-DD.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(mainFrame,
+                        "Format deadline tidak valid. Gunakan YYYY-MM-DD.",
+                        "Validasi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+            }
 
+            if (!txtStart.getText().trim().isEmpty()) {
                 try {
-                    // Create task model and save
-                    TaskModel task = new TaskModel(title, assignee.getId());
-                    task.setDescription(description);
-                    task.setDueDate(dueDate);
-                    task.setStatus(TaskStatus.TODO);
-
-                    repository.saveTask(task, project.getId());
-
-                    JOptionPane.showMessageDialog(mainFrame, "Task successfully assigned!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    refreshData();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(mainFrame, "Failed to save task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    sdf.setLenient(false);
+                    newStartDate = sdf.parse(txtStart.getText().trim());
+                } catch (Exception ex) { /* biarkan nilai lama */ }
             }
-        }
-    }
 
-    /**
-     * Action handler for PM task approvals. Marks a REVIEW task as DONE.
-     */
-    private class ApproveTaskButtonListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            ProjectModel project = managerView.getSelectedProject();
-            if (project == null) {
-                JOptionPane.showMessageDialog(mainFrame, "Please select a project from the table first.", "No Project Selected", JOptionPane.WARNING_MESSAGE);
+            if (newStartDate != null && newDeadline != null && newStartDate.after(newDeadline)) {
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Start date tidak boleh setelah deadline.",
+                    "Validasi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Reload project tasks from repository to ensure fresh states
-            ProjectModel loaded = repository.findProjectById(project.getId());
-            if (loaded == null) {
-                JOptionPane.showMessageDialog(mainFrame, "Failed to load project details.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Get tasks under REVIEW
-            List<TaskModel> reviewTasks = new ArrayList<>();
-            for (TaskModel t : loaded.getTasks()) {
-                if (t.getStatus() == TaskStatus.REVIEW) {
-                    reviewTasks.add(t);
-                }
-            }
-
-            if (reviewTasks.isEmpty()) {
-                JOptionPane.showMessageDialog(mainFrame, "No tasks are currently in REVIEW status for this project.", "No Action Needed", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-
-            // Form to select review task
-            JComboBox<TaskModel> cmbTasks = new JComboBox<>();
-            for (TaskModel t : reviewTasks) {
-                cmbTasks.addItem(t);
-            }
-            cmbTasks.setRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (value instanceof TaskModel) {
-                        TaskModel t = (TaskModel) value;
-                        setText(t.getTitle() + " (Link: " + t.getSubmissionLink() + ")");
-                    }
-                    return this;
-                }
-            });
-
-            JPanel reviewPanel = new JPanel(new GridLayout(2, 1, 8, 8));
-            reviewPanel.add(new JLabel("Select a submission deliverable to approve:"));
-            reviewPanel.add(cmbTasks);
-
-            int result = JOptionPane.showConfirmDialog(
-                    mainFrame,
-                    reviewPanel,
-                    "Approve Task Submission",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (result == JOptionPane.OK_OPTION) {
-                TaskModel task = (TaskModel) cmbTasks.getSelectedItem();
-                if (task != null) {
-                    try {
-                        task.setStatus(TaskStatus.DONE);
-                        repository.saveTask(task, loaded.getId());
-
-                        JOptionPane.showMessageDialog(mainFrame, "Task marked as DONE successfully!", "Task Approved", JOptionPane.INFORMATION_MESSAGE);
-                        refreshData();
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(mainFrame, "Approval failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+            try {
+                project.setName(newName);
+                project.setDeadline(newDeadline);
+                project.setStartDate(newStartDate);
+                repository.saveProject(project);
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Project berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                refreshData();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(mainFrame,
+                    "Gagal menyimpan: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -399,7 +322,7 @@ public class DashboardController extends BaseController {
         public void actionPerformed(ActionEvent e) {
             TaskModel task = memberView.getSelectedTask();
             if (task == null) {
-                JOptionPane.showMessageDialog(mainFrame, "Please select a task from the table first.", "No Task Selected", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(mainFrame, "Pilih task dari tabel terlebih dahulu.", "Tidak Ada Task Dipilih", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -455,7 +378,7 @@ public class DashboardController extends BaseController {
                 String link = txtLink.getText().trim();
 
                 if (selected == TaskStatus.REVIEW && link.isEmpty()) {
-                    JOptionPane.showMessageDialog(mainFrame, "Submission link is mandatory to submit for review.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(mainFrame, "Tautan pengumpulan wajib diisi untuk review.", "Validasi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -468,16 +391,16 @@ public class DashboardController extends BaseController {
 
                     int projectId = taskProjectMap.getOrDefault(task.getId(), 0);
                     if (projectId <= 0) {
-                        JOptionPane.showMessageDialog(mainFrame, "Failed to resolve project scope for the task.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(mainFrame, "Gagal memuat detail project untuk task ini.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
                     repository.saveTask(task, projectId);
 
-                    JOptionPane.showMessageDialog(mainFrame, "Status updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(mainFrame, "Status berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                     refreshData();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(mainFrame, "Failed to update task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(mainFrame, "Gagal memperbarui task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -486,6 +409,102 @@ public class DashboardController extends BaseController {
     // =========================================================================
     // Kanban Board Integration
     // =========================================================================
+
+    private void showAssignTaskDialog(ProjectModel project, Component parent) {
+        // Retrieve assignable users (DEV, UIUX) from database to prevent input errors
+        List<User> assignableUsers = getAssignableUsers();
+        if (assignableUsers.isEmpty()) {
+            JOptionPane.showMessageDialog(parent, "Tidak ada developer atau desainer yang dapat ditugaskan.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Construct form UI
+        JTextField txtTitle = new JTextField();
+        JTextArea txtDesc = new JTextArea(3, 20);
+        txtDesc.setFont(UIManager.getFont("TextField.font"));
+        txtDesc.setLineWrap(true);
+        txtDesc.setWrapStyleWord(true);
+        JScrollPane descScroll = new JScrollPane(txtDesc);
+
+        JComboBox<User> cmbAssignee = new JComboBox<>();
+        for (User u : assignableUsers) {
+            cmbAssignee.addItem(u);
+        }
+        // Pretty formatting for assignee selector
+        cmbAssignee.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof User) {
+                    User u = (User) value;
+                    setText(u.getUsername() + " (" + u.getRole() + ")");
+                }
+                return this;
+            }
+        });
+
+        JTextField txtDueDate = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 8, 8));
+        formPanel.add(new JLabel("Task Title:"));
+        formPanel.add(txtTitle);
+        formPanel.add(new JLabel("Description (Optional):"));
+        formPanel.add(descScroll);
+        formPanel.add(new JLabel("Assignee:"));
+        formPanel.add(cmbAssignee);
+        formPanel.add(new JLabel("Due Date (YYYY-MM-DD):"));
+        formPanel.add(txtDueDate);
+
+        int result = JOptionPane.showConfirmDialog(
+                parent,
+                formPanel,
+                "Assign New Task to " + project.getName(),
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String title = txtTitle.getText().trim();
+            String description = txtDesc.getText().trim();
+            User assignee = (User) cmbAssignee.getSelectedItem();
+            String dueDateStr = txtDueDate.getText().trim();
+
+            // Validation
+            if (title.isEmpty()) {
+                JOptionPane.showMessageDialog(parent, "Judul task tidak boleh kosong.", "Validasi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (assignee == null) {
+                JOptionPane.showMessageDialog(parent, "Assignee wajib diisi.", "Validasi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Date dueDate;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                df.setLenient(false);
+                dueDate = df.parse(dueDateStr);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parent, "Format tenggat waktu tidak valid. Gunakan YYYY-MM-DD.", "Validasi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                // Create task model and save
+                TaskModel task = new TaskModel(title, assignee.getId());
+                task.setDescription(description);
+                task.setDueDate(dueDate);
+                task.setStatus(TaskStatus.TODO);
+
+                repository.saveTask(task, project.getId());
+
+                JOptionPane.showMessageDialog(parent, "Task berhasil ditugaskan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                refreshData();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parent, "Gagal menyimpan task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     /**
      * Opens the interactive Kanban board window for a specific project.
@@ -502,9 +521,19 @@ public class DashboardController extends BaseController {
         boardFrame.setContentPane(boardView);
         boardFrame.setLocationRelativeTo(mainFrame);
 
+        // Tombol Assign Task hanya visible untuk PM
+        boardView.setAssignTaskVisible(currentUser.getRole() == UserRole.PM);
+
+        // Wire listener assign task
+        boardView.addAssignTaskListener(ev -> {
+            showAssignTaskDialog(project, boardFrame);
+            ProjectModel refreshed = repository.findProjectById(project.getId());
+            if (refreshed != null) boardView.displayBoard(refreshed.getTasks(), userCache);
+        });
+
         // Load project tasks
         ProjectModel loaded = repository.findProjectById(project.getId());
-        boardView.displayBoard(loaded.getTasks());
+        boardView.displayBoard(loaded.getTasks(), userCache);
 
         // Status change listener from drag/move popup on Kanban cards
         boardView.addStatusChangeListener(e -> {
@@ -516,13 +545,13 @@ public class DashboardController extends BaseController {
             if (targetStatus == TaskStatus.DONE && currentUser.getRole() != UserRole.PM) {
                 JOptionPane.showMessageDialog(
                         boardFrame,
-                        "Access Denied: Only managers can approve tasks and move them to DONE.",
-                        "Role Enforcement",
+                        "Akses Ditolak: Hanya manajer yang dapat menyetujui task dan memindahkannya ke DONE.",
+                        "Batasan Hak Akses",
                         JOptionPane.ERROR_MESSAGE
                 );
                 // Revert board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks());
+                boardView.displayBoard(reset.getTasks(), userCache);
                 return;
             }
 
@@ -536,7 +565,7 @@ public class DashboardController extends BaseController {
                 );
                 // Revert board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks());
+                boardView.displayBoard(reset.getTasks(), userCache);
                 return;
             }
 
@@ -564,7 +593,7 @@ public class DashboardController extends BaseController {
             int confirm = JOptionPane.showConfirmDialog(
                     boardFrame,
                     panel,
-                    "Confirm Move to " + targetStatus.name(),
+                    "Konfirmasi Pindah ke " + targetStatus.name(),
                     JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE
             );
@@ -574,10 +603,10 @@ public class DashboardController extends BaseController {
                 String linkInput = txtLink.getText().trim();
  
                 if (targetStatus == TaskStatus.REVIEW && linkInput.isEmpty()) {
-                    JOptionPane.showMessageDialog(boardFrame, "Submission link is mandatory to submit for review.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(boardFrame, "Tautan pengumpulan wajib diisi untuk review.", "Validasi", JOptionPane.ERROR_MESSAGE);
                     // Revert board display
                     ProjectModel reset = repository.findProjectById(project.getId());
-                    boardView.displayBoard(reset.getTasks());
+                    boardView.displayBoard(reset.getTasks(), userCache);
                     return;
                 }
  
@@ -592,17 +621,17 @@ public class DashboardController extends BaseController {
  
                     // Refresh Kanban Board
                     ProjectModel refreshed = repository.findProjectById(project.getId());
-                    boardView.displayBoard(refreshed.getTasks());
+                    boardView.displayBoard(refreshed.getTasks(), userCache);
  
                     // Refresh parent dashboard
                     refreshData();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(boardFrame, "Failed to update task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(boardFrame, "Gagal memperbarui task: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 // Cancelled - Reset board display
                 ProjectModel reset = repository.findProjectById(project.getId());
-                boardView.displayBoard(reset.getTasks());
+                boardView.displayBoard(reset.getTasks(), userCache);
             }
         });
 

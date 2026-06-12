@@ -37,7 +37,7 @@ public class AuthView extends JFrame {
     }
 
     private void initComponents() {
-        setTitle("Project Management System - Secure Login");
+        setTitle("Sistem Manajemen Proyek - Login Aman");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -60,12 +60,12 @@ public class AuthView extends JFrame {
 //        lblLogo.setForeground(ACCENT_CYAN);
 //        lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Welcome Back", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("Selamat Datang", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTitle.setForeground(TEXT_PRIMARY);
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblSubtitle = new JLabel("Log in to manage your workspace", SwingConstants.CENTER);
+        JLabel lblSubtitle = new JLabel("Masuk untuk mengelola ruang kerja Anda", SwingConstants.CENTER);
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSubtitle.setForeground(TEXT_SECONDARY);
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -81,7 +81,7 @@ public class AuthView extends JFrame {
         JLabel lblUser = new JLabel("USERNAME");
         lblUser.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblUser.setForeground(ACCENT_CYAN);
-        txtUsername = createStyledTextField("Enter your username");
+        txtUsername = createStyledTextField("Masukkan username Anda");
 
         // Password Field
         JLabel lblPass = new JLabel("PASSWORD");
@@ -104,13 +104,13 @@ public class AuthView extends JFrame {
         lblError.setMaximumSize(new Dimension(320, 20));
 
         // 4. Login Button
-        btnLogin = new GradientButton("SIGN IN");
+        btnLogin = new GradientButton("MASUK");
         btnLogin.setMaximumSize(new Dimension(320, 45));
         btnLogin.setPreferredSize(new Dimension(320, 45));
         btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Register Link
-        btnRegisterLink = new JButton("Don't have an account? Register here") {
+        btnRegisterLink = new JButton("Belum punya akun? Daftar di sini") {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);

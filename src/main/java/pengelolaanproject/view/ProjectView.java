@@ -52,12 +52,12 @@ public class ProjectView extends JPanel {
         card.setBorder(new EmptyBorder(30, 30, 30, 30));
         card.setPreferredSize(new Dimension(420, 460));
 
-        JLabel lblTitle = new JLabel("Create New Project");
+        JLabel lblTitle = new JLabel("Buat Project Baru");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitle.setForeground(TEXT_PRIMARY);
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblSubtitle = new JLabel("Initialize a new work stream and set time horizons.");
+        JLabel lblSubtitle = new JLabel("Inisialisasi alur kerja baru dan tetapkan batas waktu.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSubtitle.setForeground(TEXT_SECONDARY);
         lblSubtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -68,11 +68,11 @@ public class ProjectView extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 24)));
 
         // 2. Project Name Input
-        JLabel lblName = new JLabel("PROJECT NAME");
+        JLabel lblName = new JLabel("NAMA PROJECT");
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblName.setForeground(ACCENT_CYAN);
         lblName.setAlignmentX(Component.LEFT_ALIGNMENT);
-        txtName = createStyledTextField("e.g. Phoenix Overhaul");
+        txtName = createStyledTextField("mis. Phoenix Overhaul");
         txtName.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         card.add(lblName);
@@ -100,7 +100,7 @@ public class ProjectView extends JPanel {
         lblDeadline.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblDeadline.setForeground(ACCENT_CYAN);
         lblDeadline.setAlignmentX(Component.LEFT_ALIGNMENT);
-        txtDeadline = createStyledTextField("e.g. 2026-12-31");
+        txtDeadline = createStyledTextField("mis. 2026-12-31");
         txtDeadline.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         card.add(lblDeadline);
@@ -121,7 +121,7 @@ public class ProjectView extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 8)));
 
         // 6. Create Button
-        btnCreate = new DashboardView.GradientButton("CREATE PROJECT");
+        btnCreate = new DashboardView.GradientButton("BUAT PROJECT");
         btnCreate.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnCreate.setPreferredSize(new Dimension(360, 44));
         btnCreate.setMaximumSize(new Dimension(360, 44));
