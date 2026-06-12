@@ -35,7 +35,7 @@ public class ProjectController extends BaseController {
         this.taskBoardView = taskBoardView;
 
         // Wrap ProjectView in a modal JDialog
-        this.dialog = new JDialog((JFrame) null, "Create New Project", true);
+        this.dialog = new JDialog((JFrame) null, "Buat Project Baru", true);
         this.dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         this.dialog.setContentPane(view);
         this.dialog.pack();
@@ -74,18 +74,18 @@ public class ProjectController extends BaseController {
 
             // Client-side validations
             if (name.isEmpty()) {
-                view.showError("Project name cannot be empty.");
+                view.showError("Nama project tidak boleh kosong.");
                 return;
             }
 
             if (deadline == null) {
                 // ProjectView's getDeadline() already checks format, but we handle empty/failure fallback here
-                view.showError("A valid deadline date is required (YYYY-MM-DD).");
+                view.showError("Tenggat waktu yang valid diperlukan (YYYY-MM-DD).");
                 return;
             }
 
             if (startDate != null && startDate.after(deadline)) {
-                view.showError("Start date cannot be after deadline.");
+                view.showError("Tanggal mulai tidak boleh setelah tenggat waktu.");
                 return;
             }
 
@@ -101,8 +101,8 @@ public class ProjectController extends BaseController {
                 // Notify user
                 JOptionPane.showMessageDialog(
                         dialog,
-                        "Project \"" + name + "\" created successfully!",
-                        "Project Created",
+                        "Project \"" + name + "\" berhasil dibuat!",
+                        "Project Dibuat",
                         JOptionPane.INFORMATION_MESSAGE
                 );
 
@@ -115,7 +115,7 @@ public class ProjectController extends BaseController {
                     onProjectCreated.run();
                 }
             } catch (Exception ex) {
-                view.showError("Failed to save project: " + ex.getMessage());
+                view.showError("Gagal menyimpan project: " + ex.getMessage());
             }
         }
     }

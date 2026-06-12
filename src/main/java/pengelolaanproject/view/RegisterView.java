@@ -51,12 +51,12 @@ public class RegisterView extends JPanel {
         card.setPreferredSize(new Dimension(380, 420));
 
         // Header Title & Subtitle
-        JLabel lblTitle = new JLabel("Register Account");
+        JLabel lblTitle = new JLabel("Daftar Akun");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitle.setForeground(TEXT_PRIMARY);
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblSubtitle = new JLabel("Create a new identity to access the workspace.");
+        JLabel lblSubtitle = new JLabel("Buat identitas baru untuk mengakses ruang kerja.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSubtitle.setForeground(TEXT_SECONDARY);
         lblSubtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -93,19 +93,47 @@ public class RegisterView extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 12)));
 
         // Role Dropdown ComboBox
-        JLabel lblRole = new JLabel("USER ROLE");
+        JLabel lblRole = new JLabel("PERAN PENGGUNA");
         lblRole.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblRole.setForeground(ACCENT_CYAN);
         lblRole.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        cmbRole = new JComboBox<>(UserRole.values());
+        cmbRole = new JComboBox<>(UserRole.values()) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                // Paksa foreground tetap TEXT_PRIMARY setelah L&F update
+                setForeground(new Color(238, 238, 238));
+            }
+        };
         cmbRole.setBackground(INPUT_BG);
-        cmbRole.setForeground(TEXT_PRIMARY);
+        cmbRole.setForeground(new Color(238, 238, 238));
         cmbRole.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cmbRole.setMaximumSize(new Dimension(320, 36));
         cmbRole.setPreferredSize(new Dimension(320, 36));
         cmbRole.setAlignmentX(Component.LEFT_ALIGNMENT);
         cmbRole.setBorder(BorderFactory.createLineBorder(INPUT_BORDER, 1));
+
+        // Renderer untuk dropdown list DAN selected item
+        cmbRole.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setBackground(isSelected ? new Color(0, 110, 120) : new Color(34, 40, 49));
+                setForeground(new Color(238, 238, 238));
+                setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+                return this;
+            }
+        });
+
+        // Paksa warna editor (bagian yang tampil saat item dipilih)
+        Component editorComp = cmbRole.getEditor().getEditorComponent();
+        if (editorComp instanceof JTextField) {
+            ((JTextField) editorComp).setBackground(new Color(34, 40, 49));
+            ((JTextField) editorComp).setForeground(new Color(238, 238, 238));
+        }
 
         card.add(lblRole);
         card.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -125,7 +153,7 @@ public class RegisterView extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 8)));
 
         // Register Button
-        btnRegister = new DashboardView.GradientButton("REGISTER");
+        btnRegister = new DashboardView.GradientButton("DAFTAR");
         btnRegister.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnRegister.setPreferredSize(new Dimension(320, 42));
         btnRegister.setMaximumSize(new Dimension(320, 42));

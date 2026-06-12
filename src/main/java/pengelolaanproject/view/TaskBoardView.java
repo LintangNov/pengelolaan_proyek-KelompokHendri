@@ -2,6 +2,7 @@ package pengelolaanproject.view;
 
 import pengelolaanproject.model.TaskModel;
 import pengelolaanproject.model.TaskStatus;
+import pengelolaanproject.model.User;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * High-fidelity, premium glassmorphic Kanban board representing the active tasks.
@@ -24,6 +26,8 @@ public class TaskBoardView extends JPanel {
     private final JPanel colDonePanel = new JPanel();
 
     private final List<ActionListener> statusChangeListeners = new ArrayList<>();
+    private final List<ActionListener> assignTaskListeners = new ArrayList<>();
+    private DashboardView.GradientButton btnAssignTask;
     
     // UI Event Context state variables for the Controller to query upon action trigger
     private TaskModel activeTaskForMove;
@@ -50,21 +54,39 @@ public class TaskBoardView extends JPanel {
         setBorder(new EmptyBorder(30, 35, 30, 35));
 
         // 1. Title Header
-        JPanel headerPanel = new JPanel();
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+
+        // Kiri: judul dan subtitle
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
         JLabel lblTitle = new JLabel("Task Kanban Board");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Visualize workflows, track progress stages, and update task statuses collaboratively.");
+        JLabel lblSubtitle = new JLabel("Visualisasi progress task. Klik Pindah pada kartu untuk update status.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SECONDARY);
 
-        headerPanel.add(lblTitle);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-        headerPanel.add(lblSubtitle);
+        titlePanel.add(lblTitle);
+        titlePanel.add(Box.createRigidArea(new Dimension(0, 6)));
+        titlePanel.add(lblSubtitle);
+
+        headerPanel.add(titlePanel, BorderLayout.WEST);
+
+        // Kanan: tombol Assign Task
+        btnAssignTask = new DashboardView.GradientButton("Assign Task", 8);
+        btnAssignTask.setPreferredSize(new Dimension(130, 36));
+        btnAssignTask.setVisible(false); // default hidden, PM yang set visible
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10));
+        btnPanel.setOpaque(false);
+        btnPanel.add(btnAssignTask);
+
+        headerPanel.add(btnPanel, BorderLayout.EAST);
+
         add(headerPanel, BorderLayout.NORTH);
 
         // 2. Kanban Board Grid Panel (4 Columns)
@@ -134,10 +156,21 @@ public class TaskBoardView extends JPanel {
         }
     }
 
+    public void setAssignTaskVisible(boolean visible) {
+        if (btnAssignTask != null) btnAssignTask.setVisible(visible);
+    }
+
+    public void addAssignTaskListener(ActionListener listener) {
+        if (listener != null) {
+            assignTaskListeners.add(listener);
+            btnAssignTask.addActionListener(listener);
+        }
+    }
+
     /**
      * Re-renders the Kanban board columns with cards corresponding to the provided tasks.
      */
-    public void displayBoard(List<TaskModel> tasks) {
+    public void displayBoard(List<TaskModel> tasks, Map<Integer, User> userCache) {
         // Clear all previous items
         colTodoPanel.removeAll();
         colInProgressPanel.removeAll();
@@ -146,7 +179,7 @@ public class TaskBoardView extends JPanel {
 
         if (tasks != null) {
             for (TaskModel task : tasks) {
-                JPanel card = createTaskCard(task);
+                JPanel card = createTaskCard(task, userCache);
                 if (task.getStatus() == TaskStatus.TODO) {
                     colTodoPanel.add(card);
                     colTodoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -172,6 +205,10 @@ public class TaskBoardView extends JPanel {
         colReviewPanel.repaint();
         colDonePanel.revalidate();
         colDonePanel.repaint();
+    }
+
+    public void displayBoard(List<TaskModel> tasks) {
+        displayBoard(tasks, null);
     }
 
     /**
@@ -216,7 +253,7 @@ public class TaskBoardView extends JPanel {
     /**
      * Creates a glowing glassmorphic card representing a Task.
      */
-    private JPanel createTaskCard(TaskModel task) {
+    private JPanel createTaskCard(TaskModel task, Map<Integer, User> userCache) {
         JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -247,13 +284,19 @@ public class TaskBoardView extends JPanel {
         detailsPanel.setOpaque(false);
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
 
-        JLabel lblAssignee = new JLabel("Assignee ID: " + task.getAssigneeId());
+        String assigneeName;
+        if (userCache != null && userCache.get(task.getAssigneeId()) != null) {
+            assigneeName = userCache.get(task.getAssigneeId()).getUsername();
+        } else {
+            assigneeName = "ID: " + task.getAssigneeId();
+        }
+        JLabel lblAssignee = new JLabel("Ditugaskan ke: " + assigneeName);
         lblAssignee.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblAssignee.setForeground(TEXT_SECONDARY);
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String dueStr = task.getDueDate() != null ? df.format(task.getDueDate()) : "No Due Date";
-        JLabel lblDueDate = new JLabel("Due: " + dueStr);
+        String dueStr = task.getDueDate() != null ? df.format(task.getDueDate()) : "Tidak ada Tenggat";
+        JLabel lblDueDate = new JLabel("Tenggat: " + dueStr);
         lblDueDate.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblDueDate.setForeground(TEXT_SECONDARY);
 
@@ -272,7 +315,7 @@ public class TaskBoardView extends JPanel {
 
         // Notes
         if (task.getNotes() != null && !task.getNotes().trim().isEmpty()) {
-            JLabel lblNotes = new JLabel("<html><b>Notes:</b> " + task.getNotes() + "</html>");
+            JLabel lblNotes = new JLabel("<html><b>Catatan:</b> " + task.getNotes() + "</html>");
             lblNotes.setFont(new Font("Segoe UI", Font.PLAIN, 9));
             lblNotes.setForeground(TEXT_SECONDARY);
             detailsPanel.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -281,7 +324,7 @@ public class TaskBoardView extends JPanel {
 
         // Render URL badge if available
         if (task.getSubmissionLink() != null && !task.getSubmissionLink().trim().isEmpty()) {
-            JButton btnOpenLink = new JButton("<html><u>Open Submission</u></html>") {
+            JButton btnOpenLink = new JButton("<html><u>Buka Pengumpulan</u></html>") {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
@@ -299,7 +342,7 @@ public class TaskBoardView extends JPanel {
                 try {
                     java.awt.Desktop.getDesktop().browse(new java.net.URI(task.getSubmissionLink()));
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(TaskBoardView.this, "Cannot open link: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(TaskBoardView.this, "Tidak dapat membuka tautan: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
@@ -310,7 +353,7 @@ public class TaskBoardView extends JPanel {
         card.add(detailsPanel, BorderLayout.CENTER);
 
         // Move Action Button
-        JButton btnMove = new JButton("Move") {
+        JButton btnMove = new JButton("Pindah") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();

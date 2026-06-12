@@ -1,6 +1,7 @@
 package pengelolaanproject.view;
 
 import pengelolaanproject.model.TaskModel;
+import pengelolaanproject.model.User;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * High-fidelity, premium glassmorphic dashboard for team members.
@@ -45,11 +47,11 @@ public class MemberDashboardView extends DashboardView {
         titlePanel.setOpaque(false);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        JLabel lblTitle = new JLabel("Member Workspace");
+        JLabel lblTitle = new JLabel("Ruang Kerja Anggota");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Track your personal progress, manage status updates, and submit links.");
+        JLabel lblSubtitle = new JLabel("Pantau progres pribadi Anda, kelola pembaruan status, dan kumpulkan tautan.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SECONDARY);
 
@@ -74,13 +76,13 @@ public class MemberDashboardView extends DashboardView {
         cardPanel.setLayout(new BorderLayout(15, 15));
         cardPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JLabel lblTableTitle = new JLabel("MY ASSIGNED TASKS");
+        JLabel lblTableTitle = new JLabel("TASK SAYA");
         lblTableTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTableTitle.setForeground(ACCENT_CYAN);
         cardPanel.add(lblTableTitle, BorderLayout.NORTH);
 
         // Initialize custom premium JTable for tasks
-        String[] columns = {"ID", "Task Title", "Status", "Due Date", "Submission Link"};
+        String[] columns = {"ID", "Judul Task", "Assignee", "Status", "Tenggat Waktu", "Tautan Pengumpulan"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -127,7 +129,7 @@ public class MemberDashboardView extends DashboardView {
 
                 if (column == 0) {
                     setHorizontalAlignment(SwingConstants.CENTER);
-                } else if (column == 2) {
+                } else if (column == 3) {
                     setHorizontalAlignment(SwingConstants.CENTER);
                     if (!isSelected) {
                         // Color code status values when NOT selected
@@ -200,7 +202,7 @@ public class MemberDashboardView extends DashboardView {
     /**
      * Renders/displays the provided list of tasks into the active dashboard table.
      */
-    public void displayTasks(List<TaskModel> tasks) {
+    public void displayTasks(List<TaskModel> tasks, Map<Integer, User> userCache) {
         this.currentTasks = tasks != null ? tasks : new ArrayList<>();
         tableModel.setRowCount(0);
 
@@ -211,14 +213,25 @@ public class MemberDashboardView extends DashboardView {
             String linkStr = (task.getSubmissionLink() != null && !task.getSubmissionLink().isEmpty())
                     ? task.getSubmissionLink() : "-";
 
+            String assigneeName = "-";
+            if (userCache != null) {
+                User assignee = userCache.get(task.getAssigneeId());
+                if (assignee != null) assigneeName = assignee.getUsername();
+            }
+
             tableModel.addRow(new Object[]{
                     task.getId(),
                     task.getTitle(),
+                    assigneeName,
                     task.getStatus() != null ? task.getStatus().name() : "TODO",
                     dueDateStr,
                     linkStr
             });
         }
+    }
+
+    public void displayTasks(List<TaskModel> tasks) {
+        displayTasks(tasks, null);
     }
 
     /**

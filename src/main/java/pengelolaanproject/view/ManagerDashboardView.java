@@ -23,8 +23,7 @@ public class ManagerDashboardView extends DashboardView {
     private JTable tblProjects;
     private DefaultTableModel tableModel;
     private GradientButton btnCreateProject;
-    private GradientButton btnAssignTask;
-    private GradientButton btnApproveTask;
+    private GradientButton btnEditProject;
     private GradientButton btnLogout;
     private List<ProjectModel> currentProjects;
 
@@ -48,11 +47,11 @@ public class ManagerDashboardView extends DashboardView {
         titlePanel.setOpaque(false);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        JLabel lblTitle = new JLabel("Manager Workspace");
+        JLabel lblTitle = new JLabel("Ruang Kerja Manajer");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Oversee projects, manage lifecycles, assign resources, and approve completions.");
+        JLabel lblSubtitle = new JLabel("Awasi proyek, kelola siklus hidup, alokasikan sumber daya, dan setujui penyelesaian.");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SECONDARY);
 
@@ -77,13 +76,13 @@ public class ManagerDashboardView extends DashboardView {
         cardPanel.setLayout(new BorderLayout(15, 15));
         cardPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JLabel lblTableTitle = new JLabel("ACTIVE PROJECTS");
+        JLabel lblTableTitle = new JLabel("PROYEK AKTIF");
         lblTableTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTableTitle.setForeground(ACCENT_CYAN);
         cardPanel.add(lblTableTitle, BorderLayout.NORTH);
 
         // Initialize custom premium JTable
-        String[] columns = {"ID", "Project Name", "Start Date", "Deadline", "Total Tasks"};
+        String[] columns = {"ID", "Nama Project", "Tanggal Mulai", "Tenggat Waktu", "Total Task"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -154,18 +153,14 @@ public class ManagerDashboardView extends DashboardView {
         footerPanel.setOpaque(false);
         footerPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
 
-        btnCreateProject = new GradientButton("Create Project");
+        btnCreateProject = new GradientButton("Buat Project");
         btnCreateProject.setPreferredSize(new Dimension(150, 42));
 
-        btnAssignTask = new GradientButton("Assign Task");
-        btnAssignTask.setPreferredSize(new Dimension(140, 42));
-
-        btnApproveTask = new GradientButton("Approve Task");
-        btnApproveTask.setPreferredSize(new Dimension(140, 42));
+        btnEditProject = new GradientButton("Edit Project");
+        btnEditProject.setPreferredSize(new Dimension(130, 42));
 
         footerPanel.add(btnCreateProject);
-        footerPanel.add(btnAssignTask);
-        footerPanel.add(btnApproveTask);
+        footerPanel.add(btnEditProject);
         add(footerPanel, BorderLayout.SOUTH);
     }
 
@@ -182,22 +177,8 @@ public class ManagerDashboardView extends DashboardView {
         }
     }
 
-    /**
-     * Binds action listener for the Assign Task action.
-     */
-    public void addAssignTaskListener(ActionListener listener) {
-        if (listener != null) {
-            btnAssignTask.addActionListener(listener);
-        }
-    }
-
-    /**
-     * Binds action listener for the Approve Task action.
-     */
-    public void addApproveTaskListener(ActionListener listener) {
-        if (listener != null) {
-            btnApproveTask.addActionListener(listener);
-        }
+    public void addEditProjectListener(ActionListener listener) {
+        if (listener != null) btnEditProject.addActionListener(listener);
     }
 
     /**
