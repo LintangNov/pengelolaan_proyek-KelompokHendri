@@ -223,6 +223,7 @@ public class DashboardController extends BaseController {
             // Construct form UI
             JTextField txtTitle = new JTextField();
             JTextArea txtDesc = new JTextArea(3, 20);
+            txtDesc.setFont(UIManager.getFont("TextField.font"));
             txtDesc.setLineWrap(true);
             txtDesc.setWrapStyleWord(true);
             JScrollPane descScroll = new JScrollPane(txtDesc);
@@ -420,6 +421,7 @@ public class DashboardController extends BaseController {
             cmbStatus.setSelectedItem(task.getStatus());
             
             JTextArea txtNotes = new JTextArea(task.getNotes(), 3, 20);
+            txtNotes.setFont(UIManager.getFont("TextField.font"));
             txtNotes.setLineWrap(true);
             txtNotes.setWrapStyleWord(true);
             JScrollPane notesScroll = new JScrollPane(txtNotes);
@@ -540,6 +542,7 @@ public class DashboardController extends BaseController {
 
             // Open confirmation panel with notes and (if REVIEW) link input
             JTextArea txtNotes = new JTextArea(task.getNotes(), 3, 20);
+            txtNotes.setFont(UIManager.getFont("TextField.font"));
             txtNotes.setLineWrap(true);
             txtNotes.setWrapStyleWord(true);
             JScrollPane notesScroll = new JScrollPane(txtNotes);

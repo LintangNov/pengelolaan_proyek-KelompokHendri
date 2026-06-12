@@ -139,11 +139,11 @@ public class ProjectView extends JPanel {
         field.setForeground(TEXT_PRIMARY);
         field.setCaretColor(ACCENT_CYAN);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setMaximumSize(new Dimension(360, 38));
-        field.setPreferredSize(new Dimension(360, 38));
+        field.setMaximumSize(new Dimension(360, 42));
+        field.setPreferredSize(new Dimension(360, 42));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                BorderFactory.createEmptyBorder(4, 12, 8, 12)
         ));
 
         // Subtle glow focus effect
@@ -152,7 +152,7 @@ public class ProjectView extends JPanel {
             public void focusGained(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(ACCENT_CYAN, 1),
-                        BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                        BorderFactory.createEmptyBorder(4, 12, 8, 12)
                 ));
             }
 
@@ -160,7 +160,7 @@ public class ProjectView extends JPanel {
             public void focusLost(FocusEvent e) {
                 field.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(INPUT_BORDER, 1),
-                        BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                        BorderFactory.createEmptyBorder(4, 12, 8, 12)
                 ));
             }
         });
@@ -195,7 +195,7 @@ public class ProjectView extends JPanel {
     public Date getDeadline() {
         String deadlineStr = txtDeadline.getText().trim();
         if (deadlineStr.isEmpty()) {
-            lblError.setText("⚠ Deadline is required.");
+            lblError.setText("Deadline is required.");
             return null;
         }
 
@@ -206,7 +206,7 @@ public class ProjectView extends JPanel {
             lblError.setText(" "); // Reset error
             return date;
         } catch (Exception e) {
-            lblError.setText("⚠ Invalid deadline format. Use YYYY-MM-DD.");
+            lblError.setText("Invalid deadline format. Use YYYY-MM-DD.");
             return null;
         }
     }
@@ -237,7 +237,7 @@ public class ProjectView extends JPanel {
         if (error == null || error.trim().isEmpty()) {
             lblError.setText(" ");
         } else {
-            lblError.setText("⚠ " + error);
+            lblError.setText(error);
         }
     }
 

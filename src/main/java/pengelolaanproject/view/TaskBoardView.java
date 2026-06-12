@@ -281,7 +281,7 @@ public class TaskBoardView extends JPanel {
 
         // Render URL badge if available
         if (task.getSubmissionLink() != null && !task.getSubmissionLink().trim().isEmpty()) {
-            JButton btnOpenLink = new JButton("<html><u>✦ Open Submission</u></html>") {
+            JButton btnOpenLink = new JButton("<html><u>Open Submission</u></html>") {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
@@ -310,7 +310,7 @@ public class TaskBoardView extends JPanel {
         card.add(detailsPanel, BorderLayout.CENTER);
 
         // Move Action Button
-        JButton btnMove = new JButton("Move ➜") {
+        JButton btnMove = new JButton("Move") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
