@@ -82,7 +82,7 @@ public class MemberDashboardView extends DashboardView {
         cardPanel.add(lblTableTitle, BorderLayout.NORTH);
 
         // Initialize custom premium JTable for tasks
-        String[] columns = {"ID", "Judul Task", "Assignee", "Status", "Tenggat Waktu", "Tautan Pengumpulan"};
+        String[] columns = {"ID", "Project", "Judul Task", "Assignee", "Status", "Tenggat Waktu", "Tautan Pengumpulan"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -129,7 +129,7 @@ public class MemberDashboardView extends DashboardView {
 
                 if (column == 0) {
                     setHorizontalAlignment(SwingConstants.CENTER);
-                } else if (column == 3) {
+                } else if (column == 4) {
                     setHorizontalAlignment(SwingConstants.CENTER);
                     if (!isSelected) {
                         // Color code status values when NOT selected
@@ -202,7 +202,7 @@ public class MemberDashboardView extends DashboardView {
     /**
      * Renders/displays the provided list of tasks into the active dashboard table.
      */
-    public void displayTasks(List<TaskModel> tasks, Map<Integer, User> userCache) {
+    public void displayTasks(List<TaskModel> tasks, Map<Integer, User> userCache, Map<Integer, String> taskProjectNameMap) {
         this.currentTasks = tasks != null ? tasks : new ArrayList<>();
         tableModel.setRowCount(0);
 
@@ -219,8 +219,14 @@ public class MemberDashboardView extends DashboardView {
                 if (assignee != null) assigneeName = assignee.getUsername();
             }
 
+            String projectName = "-";
+            if (taskProjectNameMap != null) {
+                projectName = taskProjectNameMap.getOrDefault(task.getId(), "-");
+            }
+
             tableModel.addRow(new Object[]{
                     task.getId(),
+                    projectName,
                     task.getTitle(),
                     assigneeName,
                     task.getStatus() != null ? task.getStatus().name() : "TODO",
@@ -230,8 +236,12 @@ public class MemberDashboardView extends DashboardView {
         }
     }
 
+    public void displayTasks(List<TaskModel> tasks, Map<Integer, User> userCache) {
+        displayTasks(tasks, userCache, null);
+    }
+
     public void displayTasks(List<TaskModel> tasks) {
-        displayTasks(tasks, null);
+        displayTasks(tasks, null, null);
     }
 
     /**

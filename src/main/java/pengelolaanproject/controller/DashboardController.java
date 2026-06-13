@@ -49,6 +49,7 @@ public class DashboardController extends BaseController {
 
     // Maps taskId to projectId for member views where project scope is not directly available
     private final Map<Integer, Integer> taskProjectMap = new HashMap<>();
+    private final Map<Integer, String> taskProjectNameMap = new HashMap<>();
 
     private Map<Integer, User> userCache = new HashMap<>();
 
@@ -177,6 +178,7 @@ public class DashboardController extends BaseController {
             List<ProjectModel> allProjects = repository.findAllProjects();
             List<TaskModel> visibleTasks = new ArrayList<>();
             taskProjectMap.clear();
+            taskProjectNameMap.clear();
 
             for (ProjectModel project : allProjects) {
                 for (TaskModel task : project.getTasks()) {
@@ -184,10 +186,11 @@ public class DashboardController extends BaseController {
                     if (assignee != null && assignee.getRole() == currentUser.getRole()) {
                         visibleTasks.add(task);
                         taskProjectMap.put(task.getId(), project.getId());
+                        taskProjectNameMap.put(task.getId(), project.getName());
                     }
                 }
             }
-            memberView.displayTasks(visibleTasks, userCache);
+            memberView.displayTasks(visibleTasks, userCache, taskProjectNameMap);
         }
     }
 
@@ -614,7 +617,7 @@ public class DashboardController extends BaseController {
             ProjectModel refreshed = repository.findProjectById(project.getId());
             if (refreshed != null) {
                 boardView.setProjectStatus(refreshed.getStatus() != null ? refreshed.getStatus().name() : "AKTIF");
-                boardView.displayBoard(refreshed.getTasks(), userCache);
+                boardView.displayBoard(refreshed.getTasks(), userCache, refreshed.getName());
             }
         });
 
@@ -622,7 +625,7 @@ public class DashboardController extends BaseController {
         ProjectModel loaded = repository.findProjectById(project.getId());
         if (loaded != null) {
             boardView.setProjectStatus(loaded.getStatus() != null ? loaded.getStatus().name() : "AKTIF");
-            boardView.displayBoard(loaded.getTasks(), userCache);
+            boardView.displayBoard(loaded.getTasks(), userCache, loaded.getName());
         }
 
         // Status change listener from drag/move popup on Kanban cards
@@ -643,7 +646,7 @@ public class DashboardController extends BaseController {
                 ProjectModel reset = repository.findProjectById(project.getId());
                 if (reset != null) {
                     boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
-                    boardView.displayBoard(reset.getTasks(), userCache);
+                    boardView.displayBoard(reset.getTasks(), userCache, reset.getName());
                 }
                 return;
             }
@@ -660,7 +663,7 @@ public class DashboardController extends BaseController {
                 ProjectModel reset = repository.findProjectById(project.getId());
                 if (reset != null) {
                     boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
-                    boardView.displayBoard(reset.getTasks(), userCache);
+                    boardView.displayBoard(reset.getTasks(), userCache, reset.getName());
                 }
                 return;
             }
@@ -722,7 +725,7 @@ public class DashboardController extends BaseController {
                     ProjectModel refreshed = repository.findProjectById(project.getId());
                     if (refreshed != null) {
                         boardView.setProjectStatus(refreshed.getStatus() != null ? refreshed.getStatus().name() : "AKTIF");
-                        boardView.displayBoard(refreshed.getTasks(), userCache);
+                        boardView.displayBoard(refreshed.getTasks(), userCache, refreshed.getName());
                     }
  
                     // Refresh parent dashboard
@@ -735,7 +738,7 @@ public class DashboardController extends BaseController {
                 ProjectModel reset = repository.findProjectById(project.getId());
                 if (reset != null) {
                     boardView.setProjectStatus(reset.getStatus() != null ? reset.getStatus().name() : "AKTIF");
-                    boardView.displayBoard(reset.getTasks(), userCache);
+                    boardView.displayBoard(reset.getTasks(), userCache, reset.getName());
                 }
             }
         });

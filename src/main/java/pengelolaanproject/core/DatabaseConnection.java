@@ -22,25 +22,26 @@ public class DatabaseConnection {
     }
 
     /**
-     * Loads the connection configuration from the classpath resources (db.properties).
+     * Loads the connection configuration from the classpath resources
+     * (db.properties).
      */
     private void loadConfig() {
         Properties props = new Properties();
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties")) {
             if (input == null) {
                 System.err.println("Warning: db.properties not found in resources, applying defaults.");
-                url = "jdbc:mysql://localhost:8111/pengelolaan_proyek";
+                url = "jdbc:mysql://localhost:3306/pengelolaan_proyek";
                 username = "root";
                 password = "";
                 return;
-            }   
+            }
             props.load(input);
-            url = props.getProperty("db.url", "jdbc:mysql://localhost:8111/pengelolaan_proyek");
+            url = props.getProperty("db.url", "jdbc:mysql://localhost:3306/pengelolaan_proyek");
             username = props.getProperty("db.username", "root");
             password = props.getProperty("db.password", "");
         } catch (IOException ex) {
             System.err.println("Error reading db.properties: " + ex.getMessage());
-            url = "jdbc:mysql://localhost:8111/pengelolaan_proyek";
+            url = "jdbc:mysql://localhost:3306/pengelolaan_proyek";
             username = "root";
             password = "";
         }

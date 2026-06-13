@@ -29,6 +29,7 @@ public class TaskBoardView extends JPanel {
     private final List<ActionListener> assignTaskListeners = new ArrayList<>();
     private DashboardView.GradientButton btnAssignTask;
     private JLabel lblProjectStatusBadge;
+    private JLabel lblBoardTitle;
     
     // UI Event Context state variables for the Controller to query upon action trigger
     private TaskModel activeTaskForMove;
@@ -85,11 +86,11 @@ public class TaskBoardView extends JPanel {
         titleRow.setOpaque(false);
         titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Task Kanban Board");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTitle.setForeground(TEXT_PRIMARY);
+        lblBoardTitle = new JLabel("Task Kanban Board");
+        lblBoardTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblBoardTitle.setForeground(TEXT_PRIMARY);
 
-        titleRow.add(lblTitle);
+        titleRow.add(lblBoardTitle);
         titleRow.add(lblProjectStatusBadge);
 
         JLabel lblSubtitle = new JLabel("Visualisasi progress task. Klik Pindah pada kartu untuk update status.");
@@ -197,12 +198,16 @@ public class TaskBoardView extends JPanel {
     /**
      * Re-renders the Kanban board columns with cards corresponding to the provided tasks.
      */
-    public void displayBoard(List<TaskModel> tasks, Map<Integer, User> userCache) {
+    public void displayBoard(List<TaskModel> tasks, Map<Integer, User> userCache, String projectName) {
         // Clear all previous items
         colTodoPanel.removeAll();
         colInProgressPanel.removeAll();
         colReviewPanel.removeAll();
         colDonePanel.removeAll();
+
+        if (projectName != null && !projectName.isEmpty()) {
+            lblBoardTitle.setText(projectName);
+        }
 
         if (tasks != null) {
             for (TaskModel task : tasks) {
@@ -234,8 +239,12 @@ public class TaskBoardView extends JPanel {
         colDonePanel.repaint();
     }
 
+    public void displayBoard(List<TaskModel> tasks, Map<Integer, User> userCache) {
+        displayBoard(tasks, userCache, null);
+    }
+
     public void displayBoard(List<TaskModel> tasks) {
-        displayBoard(tasks, null);
+        displayBoard(tasks, null, null);
     }
 
     /**
